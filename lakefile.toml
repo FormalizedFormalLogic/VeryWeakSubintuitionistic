@@ -1,0 +1,16 @@
+name = "VF"
+defaultTargets = ["VF"]
+
+[leanOptions]
+pp.unicode.fun = true
+weak.linter.flexible = true
+weak.linter.refine = true
+weak.linter.oldObtain = true
+weak.linter.style.multiGoal = true
+
+[[lean_lib]]
+name = "VF"
+
+[[require]]
+scope = "leanprover-community"
+name = "mathlib"
