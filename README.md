@@ -1,7 +1,6 @@
 # Very Weak Subintuitionistic
 
-
-Formalization of very weak subintuitionstic logics.
+Formalization of very weak subintuitionstic logics in Lean 4.
 
 Status: **WIP**:
 This formalization is migrated from old codes from [Foundation](https://github.com/FormalizedFormalLogic).
@@ -14,3 +13,10 @@ Currently we are rewriting proofs for more generalized results on latest article
 ## Authors
 
 - Mashu Noguchi ([@SnO2WMaN](https://github.com/SnO2WMaN))
+
+## License
+
+[![CC-BY-SA 4.0](https://mirrors.creativecommons.org/presskit/buttons/88x31/svg/by-sa.svg)](./LICENSE)
+
+This project licensed under CC-BY-SA 4.0.
+See [LICENSE](./LICENSE).
