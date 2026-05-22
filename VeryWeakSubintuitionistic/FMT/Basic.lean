@@ -1,6 +1,6 @@
 module
 
-public import VeryWeakSubintuitionistic.Proof
+public import VeryWeakSubintuitionistic.Proof.VF
 
 @[expose] public section
 
@@ -109,7 +109,7 @@ lemma valid_mdp (hAB : M ⊨ A 🡒 B) (hA : M ⊨ A) : M ⊨ B := by
 @[grind <=]
 lemma valid_af (hA : M ⊨ A) : M ⊨ B 🡒 A := by grind;
 
-theorem soundness : (Λ ⊢ A) → (∀ {κ}, ∀ M : Model κ α, (∀ φ ∈ Λ, M ⊨ φ) → M ⊨ A) := by
+theorem soundness : (Λ ⊢ⱽ A) → (∀ {κ}, ∀ M : Model κ α, (∀ φ ∈ Λ, M ⊨ φ) → M ⊨ A) := by
   intro h _ M hΛ; induction h <;> grind;
 
 

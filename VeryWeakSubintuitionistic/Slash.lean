@@ -1,16 +1,16 @@
 module
 
-public import VeryWeakSubintuitionistic.Proof
+public import VeryWeakSubintuitionistic.Proof.VF
 
 @[expose] public section
 
 @[grind]
 def Slashable (Λ : Axioms α) : Formula α → Prop
-  | #a => Λ ⊢ #a
+  | #a => Λ ⊢ⱽ #a
   | ⊥ => False
   | A ⋎ B => Slashable Λ A ∨ Slashable Λ B
   | A ⋏ B => Slashable Λ A ∧ Slashable Λ B
-  | A 🡒 B => (Λ ⊢ A 🡒 B) ∧ (Slashable Λ A → Slashable Λ B)
+  | A 🡒 B => (Λ ⊢ⱽ A 🡒 B) ∧ (Slashable Λ A → Slashable Λ B)
 infix:25 " ∕ " => Slashable
 
 namespace Slashable
@@ -25,9 +25,9 @@ end Slashable
 
 variable {Λ : Axioms α} {A B C : Formula α}
 
-lemma provable_of_slashable : (Λ ∕ A) → (Λ ⊢ A) := by induction A <;> grind;
+lemma provableVF_of_slashable : (Λ ∕ A) → (Λ ⊢ⱽ A) := by induction A <;> grind;
 
-instance disjunctive_of_iff_slashable_provable (h : ∀ {A}, Λ ∕ A ↔ Λ ⊢ A) : Λ.Disjunctive := by
+instance disjunctive_of_iff_slashable_provable (h : ∀ {A}, Λ ∕ A ↔ Λ ⊢ⱽ A) : Λ.DisjunctiveVF := by
   constructor;
   grind;
 
@@ -57,7 +57,7 @@ lemma disjunctive_of_CNA (H : ∀ A ∈ Λ, A.IsCNA) : (Λ ⊢ (A ⋎ B)) → (�
 namespace Formula
 
 def IsCNA (Λ : Axioms α) : Formula α → Prop
-  | ∼A => A.Closed ∧ (Λ ⊢ A)
+  | ∼A => A.Closed ∧ (Λ ⊢ⱽ A)
   | _ => False
 
 end Formula
