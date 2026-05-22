@@ -1,8 +1,11 @@
 import Mathlib.Tactic.DeriveEncodable
 import Mathlib.Data.Finset.Basic
+import Mathlib.Data.Finset.Powerset
 import Mathlib.Data.Finset.Union
 import Mathlib.Data.Fintype.OfMap
 import Mathlib.Data.Fintype.Basic
+import Mathlib.Data.Fintype.Prod
+import Mathlib.Data.Finite.Prod
 import Mathlib.Tactic.TFAE
 
 variable {α : Type*}
@@ -610,16 +613,18 @@ end
 
 abbrev ScopeOf (Λ : Axioms α) (A : Formula α) := { B // B ∈ (scope Λ A) }
 
+instance : Fintype (Finset (ScopeOf Λ A)) where
+  elems := Finset.univ.powerset;
+  complete := by grind;
 
-
-instance : Fintype (ScopeOf Λ A) := Fintype.subtype (scope Λ A) (by tauto)
 
 structure Tableau (Λ : Axioms α) (A : Formula α) where
   ant : (Finset (ScopeOf Λ A))
   con : (Finset (ScopeOf Λ A))
 
-instance : Fintype (Tableau Λ A) := by
-  sorry
+instance : Finite (Tableau Λ A) := Finite.of_injective (λ T => (T.ant, T.con)) $ by
+  rintro ⟨_, _⟩ ⟨_, _⟩;
+  simp;
 
 namespace Tableau
 
@@ -678,10 +683,9 @@ structure SaturatedConsistentTableau (Λ : Axioms α) (A : Formula α) extends T
 
 namespace SaturatedConsistentTableau
 
-noncomputable instance : Fintype (SaturatedConsistentTableau Λ A) :=
-  Fintype.ofInjective (·.toTableau) $ by
-    rintro ⟨⟨Γ₁, Δ₁⟩⟩ ⟨⟨Γ₂, Δ₂⟩⟩;
-    grind;
+instance : Finite (SaturatedConsistentTableau Λ A) := Finite.of_injective (·.toTableau) $ by
+  rintro ⟨⟨_, _⟩⟩ ⟨⟨_, _⟩⟩;
+  simp;
 
 variable {T : SaturatedConsistentTableau Λ A}
 
@@ -827,7 +831,7 @@ noncomputable def lindenbaum (T : Tableau Λ A) (T_consis : T.Consistent) : Satu
 
 end SaturatedConsistentTableau
 
-
+open Classical
 noncomputable abbrev countermodel.rootSeed (Λ : Axioms α) (A : Formula α) : Tableau Λ A where
   ant := ∅
   con := Finset.univ.filter (λ ⟨B, _⟩ => ∃ C D, B = C.1 🡒 D.1 ∧ ∃ T : SaturatedConsistentTableau Λ A, C ∈ T.ant ∧ D ∈ T.con )
@@ -909,7 +913,7 @@ lemma countermodel.valid_axioms : ∀ B ∈ Λ, (countermodel Λ A) ⊨ B := by
   intro B hB T;
   exact countermodel.truthlemma _ |>.mp $ T.mem_ant_of_provable (B := ⟨B, mem_scope_of_mem_axioms hB⟩) (Provable.axm hB);
 
-theorem finite_model_property : (∀ {κ : Type u}, [Fintype κ] → ∀ M : Model κ α, (∀ B ∈ Λ, M ⊨ B) → M ⊨ A) → Λ ⊢ A := by
+theorem finite_model_property : (∀ {κ : Type u}, [Finite κ] → ∀ M : Model κ α, (∀ B ∈ Λ, M ⊨ B) → M ⊨ A) → Λ ⊢ A := by
   contrapose;
   intro h;
   push Not;
@@ -929,13 +933,11 @@ theorem finite_model_property : (∀ {κ : Type u}, [Fintype κ] → ∀ M : Mod
 theorem result : List.TFAE [
   Λ ⊢ A,
   ∀ {κ : Type u}, ∀ M : Model κ α, (∀ φ ∈ Λ, M ⊨ φ) → M ⊨ A,
-  ∀ {κ : Type u}, [Fintype κ] → ∀ M : Model κ α, (∀ φ ∈ Λ, M ⊨ φ) → M ⊨ A
+  ∀ {κ : Type u}, [Finite κ] → ∀ M : Model κ α, (∀ φ ∈ Λ, M ⊨ φ) → M ⊨ A
 ] := by
   tfae_have 1 → 2 := by intro h _; apply soundness h;
   tfae_have 2 → 3 := by grind;
   tfae_have 3 → 1 := finite_model_property
   tfae_finish;
-
-#print axioms result
 
 end Completeness
