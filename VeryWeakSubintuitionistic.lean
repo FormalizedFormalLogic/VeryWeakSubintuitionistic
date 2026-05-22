@@ -2,6 +2,7 @@ module  -- shake: keep-all
 
 public import VeryWeakSubintuitionistic.FMT.Basic
 public import VeryWeakSubintuitionistic.FMT.Completeness
+public import VeryWeakSubintuitionistic.Kripke.Basic
 public import VeryWeakSubintuitionistic.Proof.Basic
 public import VeryWeakSubintuitionistic.Proof.Int
 public import VeryWeakSubintuitionistic.Proof.VF

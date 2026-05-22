@@ -83,25 +83,42 @@ variable {Λ : Axioms α} {A B C : Formula α}
 @[grind =>] lemma andElimRuleL : Λ ⊢ᴵ A ⋏ B → Λ ⊢ᴵ A := λ h => mdp andElimL h
 @[grind =>] lemma andElimRuleR : Λ ⊢ᴵ A ⋏ B → Λ ⊢ᴵ B := λ h => mdp andElimR h
 
+@[induction_eliminator]
+protected lemma rec
+  {motive          : (A : Formula α) → (Λ ⊢ᴵ A) → Prop}
+  (axm             : ∀ {A}, (h : A ∈ Λ) → motive A (axm h))
+  (mdp             : ∀ {A B}, {hAB : Λ ⊢ᴵ A 🡒 B} → {hA : Λ ⊢ᴵ A} → (motive (A 🡒 B) hAB) → (motive A hA) → (motive B (mdp hAB hA)))
+  (verum           : motive (⊤ : Formula α) verum)
+  (andElimL        : ∀ {A B}, (motive ((A ⋏ B) 🡒 A) andElimL))
+  (andElimR        : ∀ {A B}, (motive ((A ⋏ B) 🡒 B) andElimR))
+  (andIntro        : ∀ {A B}, (motive (A 🡒 B 🡒 (A ⋏ B)) andIntro))
+  (orIntroL        : ∀ {A B}, (motive (A 🡒 (A ⋎ B)) orIntroL))
+  (orIntroR        : ∀ {A B}, (motive (B 🡒 (A ⋎ B)) orIntroR))
+  (orElim          : ∀ {A B C}, (motive ((A 🡒 C) 🡒 (B 🡒 C) 🡒 ((A ⋎ B) 🡒 C)) orElim))
+  (implyK          : ∀ {A B}, (motive (A 🡒 B 🡒 A) implyK))
+  (implyS          : ∀ {A B C}, (motive ((A 🡒 B 🡒 C) 🡒 (A 🡒 B) 🡒 (A 🡒 C)) implyS))
+  (efq             : ∀ {A}, (motive (⊥ 🡒 A) efq))
+  : ∀ {A}, (d : Λ ⊢ᴵ A) → motive A d := by rintro A ⟨d⟩; induction d <;> grind;
+
 end ProvableInt
 
 
-inductive IntDeduction (Λ : Axioms α) : Set (Formula α) → Formula α → Type _
-| ofProof {X A} : ProofInt Λ A → IntDeduction Λ X A
-| ofContext {X A} : A ∈ X → IntDeduction Λ X A
-| mdp {X A B} : (IntDeduction Λ X (A 🡒 B)) → (IntDeduction Λ X A) → (IntDeduction Λ X B)
-notation:25 X " ⊢ᴵ[" Λ "]! " A => IntDeduction Λ X A
+inductive DeductionInt (Λ : Axioms α) : Set (Formula α) → Formula α → Type _
+| ofProof {X A} : ProofInt Λ A → DeductionInt Λ X A
+| ofContext {X A} : A ∈ X → DeductionInt Λ X A
+| mdp {X A B} : (DeductionInt Λ X (A 🡒 B)) → (DeductionInt Λ X A) → (DeductionInt Λ X B)
+notation:25 X " ⊢ᴵ[" Λ "]! " A => DeductionInt Λ X A
 
-abbrev IntDeducible (Λ : Axioms α) (X : Set (Formula α)) (A : Formula α) : Prop := Nonempty (X ⊢ᴵ[Λ]! A)
-notation:25 X " ⊢ᴵ[" Λ "] " A => IntDeducible Λ X A
+abbrev DeducibleInt (Λ : Axioms α) (X : Set (Formula α)) (A : Formula α) : Prop := Nonempty (X ⊢ᴵ[Λ]! A)
+notation:25 X " ⊢ᴵ[" Λ "] " A => DeducibleInt Λ X A
 
-namespace IntDeducible
+namespace DeducibleInt
 
 variable {Λ : Axioms α} {X : Set (Formula α)} {A B C : Formula α}
 
-@[grind <=] lemma ofProvable {X A} : Λ ⊢ᴵ A → X ⊢ᴵ[Λ] A := λ ⟨h⟩ => ⟨IntDeduction.ofProof h⟩
-@[grind <=] lemma ofContext {X A} : A ∈ X → X ⊢ᴵ[Λ] A := λ h => ⟨IntDeduction.ofContext h⟩
-@[grind =>] lemma mdp {X A B} : (X ⊢ᴵ[Λ] A 🡒 B) → (X ⊢ᴵ[Λ] A) → (X ⊢ᴵ[Λ] B) := λ ⟨h₁⟩ ⟨h₂⟩ => ⟨IntDeduction.mdp h₁ h₂⟩
+@[grind <=] lemma ofProvable {X A} : Λ ⊢ᴵ A → X ⊢ᴵ[Λ] A := λ ⟨h⟩ => ⟨DeductionInt.ofProof h⟩
+@[grind <=] lemma ofContext {X A} : A ∈ X → X ⊢ᴵ[Λ] A := λ h => ⟨DeductionInt.ofContext h⟩
+@[grind =>] lemma mdp {X A B} : (X ⊢ᴵ[Λ] A 🡒 B) → (X ⊢ᴵ[Λ] A) → (X ⊢ᴵ[Λ] B) := λ ⟨h₁⟩ ⟨h₂⟩ => ⟨DeductionInt.mdp h₁ h₂⟩
 
 @[induction_eliminator]
 protected lemma rec
@@ -165,7 +182,7 @@ lemma orIntroRuleL : (X ⊢ᴵ[Λ] A) → (X ⊢ᴵ[Λ] A ⋎ B) := λ hA => mdp
 lemma orIntroRuleR : (X ⊢ᴵ[Λ] B) → (X ⊢ᴵ[Λ] A ⋎ B) := λ hB => mdp (ofProvable $ ProvableInt.orIntroR) hB
 lemma orElimRule : (X ⊢ᴵ[Λ] A 🡒 C) → (X ⊢ᴵ[Λ] B 🡒 C) → (X ⊢ᴵ[Λ] (A ⋎ B)) → X ⊢ᴵ[Λ] C := λ hAC hBC hAB => mdp (mdp (mdp (ofProvable $ ProvableInt.orElim) hAC) hBC) hAB
 
-end IntDeducible
+end DeducibleInt
 
 namespace ProvableInt
 
@@ -174,16 +191,16 @@ variable {Λ : Axioms α} {A B C : Formula α}
 @[grind <=]
 lemma ruleC : Λ ⊢ᴵ A 🡒 B → Λ ⊢ᴵ A 🡒 C → Λ ⊢ᴵ A 🡒 (B ⋏ C) := by
   intro hAB hAC;
-  apply IntDeducible.iff_singleton_deducible_provable.mp;
-  replace hAB : {A} ⊢ᴵ[Λ] B := IntDeducible.iff_singleton_deducible_provable.mpr hAB;
-  replace hAC : {A} ⊢ᴵ[Λ] C := IntDeducible.iff_singleton_deducible_provable.mpr hAC;
-  have        : {A} ⊢ᴵ[Λ] (B 🡒 C 🡒 (B ⋏ C)) := IntDeducible.ofProvable $ ProvableInt.andIntro;
-  exact IntDeducible.mdp (IntDeducible.mdp this hAB) hAC
+  apply DeducibleInt.iff_singleton_deducible_provable.mp;
+  replace hAB : {A} ⊢ᴵ[Λ] B := DeducibleInt.iff_singleton_deducible_provable.mpr hAB;
+  replace hAC : {A} ⊢ᴵ[Λ] C := DeducibleInt.iff_singleton_deducible_provable.mpr hAC;
+  have        : {A} ⊢ᴵ[Λ] (B 🡒 C 🡒 (B ⋏ C)) := DeducibleInt.ofProvable $ ProvableInt.andIntro;
+  exact DeducibleInt.mdp (DeducibleInt.mdp this hAB) hAC
 
 @[grind <=]
 lemma ruleD : Λ ⊢ᴵ A 🡒 C → Λ ⊢ᴵ B 🡒 C → Λ ⊢ᴵ (A ⋎ B) 🡒 C := by
   intro hAC hBC;
-  apply IntDeducible.iff_singleton_deducible_provable.mp;
+  apply DeducibleInt.iff_singleton_deducible_provable.mp;
   have : ({A ⋎ B} : Set (Formula α)) ⊢ᴵ[Λ] (A 🡒 C) 🡒 (B 🡒 C) 🡒 ((A ⋎ B) 🡒 C) := .ofProvable $ .orElim;
   have : {A ⋎ B} ⊢ᴵ[Λ] (A ⋎ B) 🡒 C := .mdp (.mdp this (.ofProvable hAC)) (.ofProvable hBC);
   exact .mdp this (.ofContext $ by simp);
@@ -191,38 +208,38 @@ lemma ruleD : Λ ⊢ᴵ A 🡒 C → Λ ⊢ᴵ B 🡒 C → Λ ⊢ᴵ (A ⋎ B) 
 @[grind =>]
 lemma ruleI : Λ ⊢ᴵ A 🡒 B → Λ ⊢ᴵ B 🡒 C → Λ ⊢ᴵ A 🡒 C := by
   intro hAB hBC;
-  apply IntDeducible.iff_singleton_deducible_provable.mp;
-  replace hAB : {A} ⊢ᴵ[Λ] B := IntDeducible.iff_singleton_deducible_provable.mpr hAB;
-  replace hBC : {A} ⊢ᴵ[Λ] B 🡒 C := IntDeducible.ofProvable hBC;
-  exact IntDeducible.mdp hBC hAB;
+  apply DeducibleInt.iff_singleton_deducible_provable.mp;
+  replace hAB : {A} ⊢ᴵ[Λ] B := DeducibleInt.iff_singleton_deducible_provable.mpr hAB;
+  replace hBC : {A} ⊢ᴵ[Λ] B 🡒 C := DeducibleInt.ofProvable hBC;
+  exact DeducibleInt.mdp hBC hAB;
 
 @[grind .]
 lemma distributeAndOr : Λ ⊢ᴵ (A ⋏ (B ⋎ C)) 🡒 ((A ⋏ B) ⋎ (A ⋏ C)) := by
-  apply IntDeducible.iff_singleton_deducible_provable.mp;
-  have hA : {A ⋏ (B ⋎ C)} ⊢ᴵ[Λ] A := IntDeducible.andElimRuleL (B := B ⋎ C) $ IntDeducible.ofContext (by simp);
+  apply DeducibleInt.iff_singleton_deducible_provable.mp;
+  have hA : {A ⋏ (B ⋎ C)} ⊢ᴵ[Λ] A := DeducibleInt.andElimRuleL (B := B ⋎ C) $ DeducibleInt.ofContext (by simp);
   have :=
-    IntDeducible.ofProvable (X := {A ⋏ (B ⋎ C)}) $
+    DeducibleInt.ofProvable (X := {A ⋏ (B ⋎ C)}) $
     ProvableInt.orElim (Λ := Λ) (A := B) (B := C) (C := A ⋏ B ⋎ A ⋏ C);
-  apply IntDeducible.mdp (IntDeducible.mdp (IntDeducible.mdp this ?_) ?_) ?_;
+  apply DeducibleInt.mdp (DeducibleInt.mdp (DeducibleInt.mdp this ?_) ?_) ?_;
   . show {A ⋏ (B ⋎ C)} ⊢ᴵ[Λ] B 🡒 (A ⋏ B ⋎ A ⋏ C);
-    apply IntDeducible.drop_ctx;
-    apply IntDeducible.orIntroRuleL;
-    apply IntDeducible.andIntroRule;
-    . apply IntDeducible.of_subset_ctx (X := {A ⋏ (B ⋎ C)});
+    apply DeducibleInt.drop_ctx;
+    apply DeducibleInt.orIntroRuleL;
+    apply DeducibleInt.andIntroRule;
+    . apply DeducibleInt.of_subset_ctx (X := {A ⋏ (B ⋎ C)});
       . tauto;
       . exact hA;
-    . apply IntDeducible.ofContext;
+    . apply DeducibleInt.ofContext;
       simp;
   . show {A ⋏ (B ⋎ C)} ⊢ᴵ[Λ] C 🡒 (A ⋏ B ⋎ A ⋏ C);
-    apply IntDeducible.drop_ctx;
-    apply IntDeducible.orIntroRuleR;
-    apply IntDeducible.andIntroRule;
-    . apply IntDeducible.of_subset_ctx (X := {A ⋏ (B ⋎ C)});
+    apply DeducibleInt.drop_ctx;
+    apply DeducibleInt.orIntroRuleR;
+    apply DeducibleInt.andIntroRule;
+    . apply DeducibleInt.of_subset_ctx (X := {A ⋏ (B ⋎ C)});
       . tauto;
       . trivial;
-    . apply IntDeducible.ofContext;
+    . apply DeducibleInt.ofContext;
       simp;
-  . exact IntDeducible.andElimRuleR (A := A) $ IntDeducible.ofContext (by simp);
+  . exact DeducibleInt.andElimRuleR (A := A) $ DeducibleInt.ofContext (by simp);
 
 end ProvableInt
 

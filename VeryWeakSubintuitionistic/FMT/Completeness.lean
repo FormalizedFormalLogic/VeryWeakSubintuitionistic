@@ -302,7 +302,7 @@ lemma countermodel.rootSeed_consistent {Λ : Axioms α} [Λ.ConsistentVF] [Λ.Di
   apply T.consistent;
   apply ruleI₃ (B := C.1) (C := D.1) <;> grind;
 
-noncomputable def countermodel (Λ : Axioms α) (A) [Λ.ConsistentVF] [Λ.DisjunctiveVF] : Model (SaturatedConsistentTableau Λ A) α where
+noncomputable def countermodel (Λ : Axioms α) (A) [Λ.ConsistentVF] [Λ.DisjunctiveVF] : FMTModel (SaturatedConsistentTableau Λ A) α where
   Val a T := (ha : #a ∈ scope Λ A) → ⟨#a, ha⟩ ∈ T.ant
   Rel' B T₁ T₂ :=
     match B with
@@ -361,7 +361,7 @@ lemma countermodel.valid_axioms : ∀ B ∈ Λ, (countermodel Λ A) ⊨ B := by
   intro B hB T;
   exact countermodel.truthlemma _ |>.mp $ T.mem_ant_of_provable (B := ⟨B, mem_scope_of_mem_axioms hB⟩) (axm hB);
 
-theorem finite_model_property : (∀ {κ : Type u}, [Finite κ] → ∀ M : Model κ α, (∀ B ∈ Λ, M ⊨ B) → M ⊨ A) → Λ ⊢ⱽ A := by
+theorem finite_model_property : (∀ {κ : Type u}, [Finite κ] → ∀ M : FMTModel κ α, (∀ B ∈ Λ, M ⊨ B) → M ⊨ A) → Λ ⊢ⱽ A := by
   contrapose;
   intro h;
   push Not;
@@ -380,8 +380,8 @@ theorem finite_model_property : (∀ {κ : Type u}, [Finite κ] → ∀ M : Mode
 
 theorem result : List.TFAE [
   Λ ⊢ⱽ A,
-  ∀ {κ : Type u}, ∀ M : Model κ α, (∀ φ ∈ Λ, M ⊨ φ) → M ⊨ A,
-  ∀ {κ : Type u}, [Finite κ] → ∀ M : Model κ α, (∀ φ ∈ Λ, M ⊨ φ) → M ⊨ A
+  ∀ {κ : Type u}, ∀ M : FMTModel κ α, (∀ φ ∈ Λ, M ⊨ φ) → M ⊨ A,
+  ∀ {κ : Type u}, [Finite κ] → ∀ M : FMTModel κ α, (∀ φ ∈ Λ, M ⊨ φ) → M ⊨ A
 ] := by
   tfae_have 1 → 2 := by intro h _; apply soundness h;
   tfae_have 2 → 3 := by grind;

@@ -4,39 +4,39 @@ public import VeryWeakSubintuitionistic.Proof.VF
 
 @[expose] public section
 
-structure Frame (κ : Type*) (α : Type*) where
+structure FMTFrame (κ : Type*) (α : Type*) where
   Rel' : Formula α → κ → κ → Prop
   root' : κ
   root_rooted' : ∀ {A x}, Rel' A root' x
 
-namespace Frame
+namespace FMTFrame
 
-variable {κ α : Type*} {F : Frame κ α}
+variable {κ α : Type*} {F : FMTFrame κ α}
 
-abbrev World (_ : Frame κ α) := κ
-abbrev Rel {F : Frame κ α} (A : Formula α) (x y : F.World) := F.Rel' A x y
-notation:45 x:90 " ≺[" φ "] " y:90 => Frame.Rel φ x y
+abbrev World (_ : FMTFrame κ α) := κ
+abbrev Rel {F : FMTFrame κ α} (A : Formula α) (x y : F.World) := F.Rel' A x y
+notation:45 x:90 " ≺[" φ "] " y:90 => FMTFrame.Rel φ x y
 
 abbrev root : F.World := F.root'
 @[grind .] lemma root_rooted : ∀ {A x}, F.root ≺[A] x := F.root_rooted'
 
-end Frame
+end FMTFrame
 
 
-structure Model (κ : Type*) (α : Type*) extends Frame κ α where
-  Val : α → (toFrame.World) → Prop
+structure FMTModel (κ : Type*) (α : Type*) extends FMTFrame κ α where
+  Val : α → (toFMTFrame.World) → Prop
 
-namespace Model
+namespace FMTModel
 
-instance : CoeFun (Model κ α) (λ M => α → M.World → Prop) := ⟨fun m => m.Val⟩
+instance : CoeFun (FMTModel κ α) (λ M => α → M.World → Prop) := ⟨fun m => m.Val⟩
 
-end Model
+end FMTModel
 
 
-variable {κ α : Type*} {M : Model κ α} {A B C : Formula α}
+variable {κ α : Type*} {M : FMTModel κ α} {A B C : Formula α}
 
 @[grind]
-def Forces {M : Model κ α} (x : M.World) : Formula α → Prop
+def Forces {M : FMTModel κ α} (x : M.World) : Formula α → Prop
   | #a     => M a x
   | ⊥      => False
   | A ⋏ B   => Forces x A ∧ Forces x B
@@ -44,36 +44,36 @@ def Forces {M : Model κ α} (x : M.World) : Formula α → Prop
   | A 🡒 B => ∀ y, x ≺[A 🡒 B] y → (Forces y A → Forces y B)
 infix:45 " ⊩ " => Forces
 
-abbrev NotForces {M : Model κ α} (x : M.World) (φ : Formula α) : Prop := ¬(x ⊩ φ)
+abbrev NotForces {M : FMTModel κ α} (x : M.World) (φ : Formula α) : Prop := ¬(x ⊩ φ)
 infix:45 " ⊮ " => NotForces
 
 lemma iff_not_Forces_imp : (x ⊮ A 🡒 B) ↔ (∃ y, x ≺[A 🡒 B] y ∧ (y ⊩ A ∧ y ⊮ B)) := by
   simp [NotForces, Forces];
 
 
-@[grind] def Validates (M : Model κ α) (A : Formula α) : Prop := ∀ x : M.World, x ⊩ A
+@[grind] def Validates (M : FMTModel κ α) (A : Formula α) : Prop := ∀ x : M.World, x ⊩ A
 infix:45 " ⊨ " => Validates
 
-@[grind] abbrev NotValidates (M : Model κ α) (A : Formula α) : Prop := ¬(M ⊨ A)
+@[grind] abbrev NotValidates (M : FMTModel κ α) (A : Formula α) : Prop := ¬(M ⊨ A)
 infix:45 " ⊭ " => NotValidates
 
-lemma iff_Valid_exists_world_not_Forces {M : Model κ α} {A : Formula α} : (M ⊭ A) ↔ (∃ x : M.World, x ⊮ A) := by
+lemma iff_Valid_exists_world_not_Forces {M : FMTModel κ α} {A : Formula α} : (M ⊭ A) ↔ (∃ x : M.World, x ⊮ A) := by
   simp only [NotValidates, Validates, not_forall, NotForces];
 
 
-@[grind] def FrameValid (F : Frame κ α) (A : Formula α) : Prop := ∀ V, Validates ⟨F, V⟩ A
-infix:45 " ⊨ " => FrameValid
+@[grind] def FMTFrameValid (F : FMTFrame κ α) (A : Formula α) : Prop := ∀ V, Validates ⟨F, V⟩ A
+infix:45 " ⊨ " => FMTFrameValid
 
-abbrev NotFrameValid (F : Frame κ α) (A : Formula α) : Prop := ¬(F ⊨ A)
-infix:45 " ⊭ " => NotFrameValid
+abbrev NotFMTFrameValid (F : FMTFrame κ α) (A : Formula α) : Prop := ¬(F ⊨ A)
+infix:45 " ⊭ " => NotFMTFrameValid
 
-lemma iff_notFrameValid_exists_model_world {F : Frame κ α} {A : Formula α} : (F ⊭ A) ↔ (∃ V, ∃ x : (⟨F, V⟩ : Model κ α).World, x ⊮ A) := by
-  simp only [NotFrameValid, FrameValid, Validates, not_forall, NotForces];
+lemma iff_notFMTFrameValid_exists_model_world {F : FMTFrame κ α} {A : Formula α} : (F ⊭ A) ↔ (∃ V, ∃ x : (⟨F, V⟩ : FMTModel κ α).World, x ⊮ A) := by
+  simp only [NotFMTFrameValid, FMTFrameValid, Validates, not_forall, NotForces];
 
 
 section Soundness
 
-variable {κ α : Type*} {M : Model κ α} {A B C : Formula α}
+variable {κ α : Type*} {M : FMTModel κ α} {A B C : Formula α}
 
 @[grind .] lemma valid_andElimL : M ⊨ (A ⋏ B) 🡒 A := by grind;
 @[grind .] lemma valid_andElimR : M ⊨ (A ⋏ B) 🡒 B := by grind;
@@ -109,14 +109,14 @@ lemma valid_mdp (hAB : M ⊨ A 🡒 B) (hA : M ⊨ A) : M ⊨ B := by
 @[grind <=]
 lemma valid_af (hA : M ⊨ A) : M ⊨ B 🡒 A := by grind;
 
-theorem soundness : (Λ ⊢ⱽ A) → (∀ {κ}, ∀ M : Model κ α, (∀ φ ∈ Λ, M ⊨ φ) → M ⊨ A) := by
+theorem soundness : (Λ ⊢ⱽ A) → (∀ {κ}, ∀ M : FMTModel κ α, (∀ φ ∈ Λ, M ⊨ φ) → M ⊨ A) := by
   intro h _ M hΛ; induction h <;> grind;
 
 
 @[grind .]
 theorem consistency_of_VF : (∅ ⊬ (⊥ : Formula α)) := by
   by_contra!;
-  let M : Model (Fin 1) α := {
+  let M : FMTModel (Fin 1) α := {
     Rel' := λ _ _ _ => True,
     root' := 1,
     root_rooted' := by grind;
@@ -128,7 +128,7 @@ theorem consistency_of_VF : (∅ ⊬ (⊥ : Formula α)) := by
 @[grind .]
 theorem consistency_VF : (∅ ⊬ (⊥ : Formula α)) := by
   by_contra!;
-  let M : Model (Fin 1) α := {
+  let M : FMTModel (Fin 1) α := {
     Rel' := λ _ _ _ => True,
     root' := 1,
     root_rooted' := by grind;
@@ -139,7 +139,7 @@ theorem consistency_VF : (∅ ⊬ (⊥ : Formula α)) := by
 
 example : (∅ ⊬ (⊤ 🡒 (#0 ⋏ #1) 🡘 (⊤ 🡒 (#1 ⋏ #0)))) := by
   by_contra!;
-  let M : Model (Fin 3) ℕ := {
+  let M : FMTModel (Fin 3) ℕ := {
     Rel' := λ A x y =>
       match A with
       | (⊤ 🡒 (#0 ⋏ #1)) => x ≠ 1
@@ -163,36 +163,36 @@ end Soundness
 section
 
 @[grind]
-def FrameForces {F : Frame κ α} (x : F.World) (A : Formula α) (A_closed : A.Closed := by grind) : Prop :=
+def FMTFrameForces {F : FMTFrame κ α} (x : F.World) (A : Formula α) (A_closed : A.Closed := by grind) : Prop :=
   match A with
   | ⊥ => False
-  | A ⋏ B => FrameForces x A ∧ FrameForces x B
-  | A ⋎ B => FrameForces x A ∨ FrameForces x B
-  | A 🡒 B => ∀ {y}, F.Rel (A 🡒 B) x y → (FrameForces y A → FrameForces y B)
+  | A ⋏ B => FMTFrameForces x A ∧ FMTFrameForces x B
+  | A ⋎ B => FMTFrameForces x A ∨ FMTFrameForces x B
+  | A 🡒 B => ∀ {y}, F.Rel (A 🡒 B) x y → (FMTFrameForces y A → FMTFrameForces y B)
 
-variable {F : Frame κ α}
+variable {F : FMTFrame κ α}
 
 @[grind =_]
-lemma iff_frameForces_Forces_of_closed {F : Frame κ α} {x : F.World} {V} {A} (A_closed : A.Closed) : FrameForces x A ↔ (Forces (M := ⟨F, V⟩) x A) := by
+lemma iff_FMTFrameForces_Forces_of_closed {F : FMTFrame κ α} {x : F.World} {V} {A} (A_closed : A.Closed) : FMTFrameForces x A ↔ (Forces (M := ⟨F, V⟩) x A) := by
   induction A generalizing x <;> grind;
 
-lemma iff_Forces_CNA (A_closed : A.Closed) : FrameValid F (∼A) ↔ ∀ x : F.World, ¬(FrameForces x A) := by
+lemma iff_Forces_CNA (A_closed : A.Closed) : FMTFrameValid F (∼A) ↔ ∀ x : F.World, ¬(FMTFrameForces x A) := by
   constructor;
   . intro h x;
     by_contra!
-    exact h (λ _ _ => True) F.root x (by grind) $ iff_frameForces_Forces_of_closed (by grind) |>.mp this;
+    exact h (λ _ _ => True) F.root x (by grind) $ iff_FMTFrameForces_Forces_of_closed (by grind) |>.mp this;
   . intro h V x;
     grind;
 
 @[grind =_]
-lemma iff_closed_not_and : F ⊨ ∼(A ⋎ B) ↔ (FrameValid F (∼A) ∧ FrameValid F (∼B)) := by grind;
+lemma iff_closed_not_and : F ⊨ ∼(A ⋎ B) ↔ (FMTFrameValid F (∼A) ∧ FMTFrameValid F (∼B)) := by grind;
 
-lemma iff_closed_not_imp (A_closed : A.Closed) (B_closed : B.Closed) : F ⊨ ∼(A 🡒 B) ↔ (∀ x : F.World, ∃ y : F.World, x ≺[A 🡒 B] y ∧ (FrameForces y A ∧ ¬FrameForces y B)) := by
+lemma iff_closed_not_imp (A_closed : A.Closed) (B_closed : B.Closed) : F ⊨ ∼(A 🡒 B) ↔ (∀ x : F.World, ∃ y : F.World, x ≺[A 🡒 B] y ∧ (FMTFrameForces y A ∧ ¬FMTFrameForces y B)) := by
   apply Iff.trans (iff_Forces_CNA (A := A 🡒 B) (by grind));
-  simp [FrameForces];
+  simp [FMTFrameForces];
 
-lemma iff_closed_dn (A_closed : A.Closed) : F ⊨ ∼∼A ↔ (∀ x : F.World, ∃ y : F.World, x ≺[∼A] y ∧ (FrameForces y A)) := by
+lemma iff_closed_dn (A_closed : A.Closed) : F ⊨ ∼∼A ↔ (∀ x : F.World, ∃ y : F.World, x ≺[∼A] y ∧ (FMTFrameForces y A)) := by
   apply Iff.trans (iff_closed_not_imp (A := A) (B := ⊥) (by grind) (by grind));
-  simp [FrameForces];
+  simp [FMTFrameForces];
 
 end

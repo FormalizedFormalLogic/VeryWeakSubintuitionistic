@@ -1,6 +1,8 @@
 module
 
 public import VeryWeakSubintuitionistic.Proof.VF
+public import VeryWeakSubintuitionistic.Kripke.Basic
+public import VeryWeakSubintuitionistic.FMT.Basic
 
 @[expose] public section
 
@@ -56,8 +58,8 @@ lemma disjunctive_of_CNA (H : ∀ A ∈ Λ, A.IsCNA) : (Λ ⊢ (A ⋎ B)) → (�
 
 namespace Formula
 
-def IsCNA (Λ : Axioms α) : Formula α → Prop
-  | ∼A => A.Closed ∧ (Λ ⊢ⱽ A)
+def IsCNA : Formula α → Prop
+  | ∼A => A.Closed ∧ (∅ ⊬ᴵ A)
   | _ => False
 
 end Formula
