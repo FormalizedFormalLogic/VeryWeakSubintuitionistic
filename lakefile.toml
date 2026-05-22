@@ -1,5 +1,5 @@
 name = "VF"
-defaultTargets = ["VF"]
+defaultTargets = ["VeryWeakSubintuitionistic"]
 
 [leanOptions]
 pp.unicode.fun = true
@@ -9,7 +9,7 @@ weak.linter.oldObtain = true
 weak.linter.style.multiGoal = true
 
 [[lean_lib]]
-name = "VF"
+name = "VeryWeakSubintuitionistic"
 
 [[require]]
 scope = "leanprover-community"
