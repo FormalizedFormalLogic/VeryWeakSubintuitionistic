@@ -532,23 +532,27 @@ lemma disjunctive_of_CNA (H : ∀ A ∈ Λ, A.IsCNA) : (Λ ⊢ (A ⋎ B)) → (�
   . left; exact iff_slashable_provable_of_CNA H |>.mp h;
   . right; exact iff_slashable_provable_of_CNA H |>.mp h;
 
-lemma ldisj_disjunctive (hD : ∀ {A B}, (Λ ⊢ (A ⋎ B)) → (Λ ⊢ A) ∨ (Λ ⊢ B)) {l : List _} (hl : l ≠ []) : Λ ⊢ ⋁l → ∃ B ∈ l, Λ ⊢ B := by
+
+variable [Fact (∀ {A B}, (Λ ⊢ (A ⋎ B)) → (Λ ⊢ A) ∨ (Λ ⊢ B))]
+
+lemma Provable.ldisj_disjunctive {l : List _} (hl : l ≠ []) : Λ ⊢ ⋁l → ∃ B ∈ l, Λ ⊢ B := by
   match l with
   | [] => contradiction
   | [A] => intro _; use A; simpa;
   | A :: B :: l =>
     intro hAB;
     unfold Formula.ldisj at hAB;
-    rcases hD hAB with hA | hB;
+    rcases (Fact.elim (p := ∀ {A B}, (Λ ⊢ (A ⋎ B)) → (Λ ⊢ A) ∨ (Λ ⊢ B)) inferInstance hAB) with hA | hB;
     . use A;
       grind;
-    . obtain ⟨C, hC⟩ := ldisj_disjunctive hD (by grind) hB;
+    . obtain ⟨C, hC⟩ := ldisj_disjunctive (by grind) hB;
       use C;
       grind;
 
-lemma fdisj_disujunctive (hD : ∀ {A B}, (Λ ⊢ (A ⋎ B)) → (Λ ⊢ A) ∨ (Λ ⊢ B)) {s : Finset _} (hs : s ≠ ∅) : Λ ⊢ ⋁s → ∃ B ∈ s, Λ ⊢ B := by
+lemma Provable.fdisj_disujunctive {s : Finset _} (hs : s ≠ ∅) : Λ ⊢ ⋁s → ∃ B ∈ s, Λ ⊢ B := by
   intro h;
-  simpa using ldisj_disjunctive hD (by simpa) h;
+  simpa using ldisj_disjunctive (by simpa) h;
+
 
 end
 
@@ -614,7 +618,8 @@ structure Tableau (Λ : Axioms α) (A : Formula α) where
   ant : (Finset (ScopeOf Λ A))
   con : (Finset (ScopeOf Λ A))
 
-instance : Fintype (Tableau Λ A) := by sorry
+instance : Fintype (Tableau Λ A) := by
+  sorry
 
 namespace Tableau
 
@@ -746,15 +751,79 @@ lemma mem_ant_of_provable (hB : Λ ⊢ B.1) : B ∈ T.ant := imp_closed (by grin
 @[grind .]
 lemma not_mem_both : ¬(B ∈ T.ant ∧ B ∈ T.con) := by grind;
 
-section lindenbaum
 
-lemma lindenbaum (T₀ : Tableau Λ A) (hT₀ : T₀.Consistent) : ∃ T : SaturatedConsistentTableau Λ A,
-  T₀.ant ⊆ T.ant ∧
-  T₀.con ⊆ T.con := by
-  sorry
+namespace lindenbaum
+
+open Classical
+
+noncomputable def next (T : Tableau Λ A) (B : ScopeOf Λ A) : Tableau Λ A :=
+  if Tableau.Consistent (Tableau.insertAnt T B) then Tableau.insertAnt T B else Tableau.insertCon T B
+
+variable {T : Tableau Λ A} {B : ScopeOf Λ A}
+
+lemma next_consistent (hT : T.Consistent) : Tableau.Consistent (next T B) := by
+  dsimp [next];
+  split;
+  . trivial;
+  . grind [Tableau.either_consistent_insert];
+
+lemma next_monotone_ant : T.ant ⊆ (next T B).ant := by grind [next, Tableau.insertAnt, Tableau.insertCon];
+lemma next_monotone_con : T.con ⊆ (next T B).con := by grind [next, Tableau.insertAnt, Tableau.insertCon];
+
+lemma next_of_mem : B ∈ (next T B).ant ∨ B ∈ (next T B).con := by grind [next, Tableau.insertAnt, Tableau.insertCon];
+
+noncomputable def enum (T : Tableau Λ A) : List (ScopeOf Λ A) → Tableau Λ A
+  | [] => T
+  | B :: X => next (enum T X) B
+
+variable {X : List (ScopeOf Λ A)}
+
+@[simp, grind .]
+lemma enum_consistent (hT : T.Consistent) {X : List (ScopeOf Λ A)} : Tableau.Consistent (enum T X) := by
+  induction X with
+  | nil => trivial
+  | cons _ _ ih => apply next_consistent ih;
+
+lemma enum_monotone_ant : T.ant ⊆ (enum T X).ant := by
+  induction X with
+  | nil => simp [enum];
+  | cons B X ih =>
+    trans (enum T X).ant;
+    . exact ih;
+    . exact next_monotone_ant;
+
+lemma enum_monotone_con : T.con ⊆ (enum T X).con := by
+  induction X with
+  | nil => simp [enum];
+  | cons B X ih =>
+    trans (enum T X).con;
+    . exact ih;
+    . exact next_monotone_con;
+
+lemma enum_of_mem (hB : B ∈ X) : B ∈ (enum T X).ant ∨ B ∈ (enum T X).con := by
+  induction X with
+  | nil => contradiction
+  | cons C X ih =>
+    simp only [List.mem_cons] at hB;
+    rcases hB with rfl | hB;
+    . rcases next_of_mem (T := enum T X) (B := B) with h | h <;> grind [enum];
+    . rcases ih hB with h | h;
+      . left; apply next_monotone_ant h;
+      . right; apply next_monotone_con h;
 
 end lindenbaum
 
+noncomputable def lindenbaum (T : Tableau Λ A) (T_consis : T.Consistent) : SaturatedConsistentTableau Λ A where
+  toTableau := lindenbaum.enum (Λ := Λ) (A := A) T (Finset.univ.toList)
+  consistent := lindenbaum.enum_consistent T_consis
+  saturated := by
+    ext B;
+    simp only [Finset.mem_union, Finset.mem_univ, iff_true];
+    apply lindenbaum.enum_of_mem;
+    simp;
+
+@[simp, grind .] lemma lindenbaum_subset_ant {T : Tableau Λ A} {T_consis : T.Consistent} : T.ant ⊆ (lindenbaum T T_consis).ant := lindenbaum.enum_monotone_ant
+@[simp, grind .] lemma lindenbaum_subset_con {T : Tableau Λ A} {T_consis : T.Consistent} : T.con ⊆ (lindenbaum T T_consis).con := lindenbaum.enum_monotone_con
 
 end SaturatedConsistentTableau
 
@@ -775,7 +844,7 @@ lemma countermodel.rootSeed_consistent {Λ : Axioms α} {A : Formula α} [Fact (
   . apply Fact.elim (p := Λ ⊬ ⊥) inferInstance;
     grind;
   obtain ⟨C, D, T, hC, hD, hCD⟩ : ∃ C D : ScopeOf Λ A, ∃ T : SaturatedConsistentTableau Λ A, C ∈ T.ant ∧ D ∈ T.con ∧ (Λ ⊢ C.1 🡒 D.1) := by
-    have := fdisj_disujunctive (Fact.elim (p := ∀ {A B}, Λ ⊢ A ⋎ B → (Λ ⊢ A) ∨ (Λ ⊢ B)) inferInstance) ne hC;
+    have := Provable.fdisj_disujunctive ne hC;
     unfold rootSeed at this;
     grind;
   apply T.consistent;
@@ -787,7 +856,7 @@ noncomputable def countermodel (Λ : Axioms α) (A) [Fact (Λ ⊬ ⊥)] [Fact (�
     match B with
     | (C 🡒 D) => (h : C 🡒 D ∈ scope Λ A) → ⟨C 🡒 D, h⟩ ∈ T₁.con ∨ ⟨C, (by grind)⟩ ∈ T₂.con ∨ ⟨D, (by grind)⟩ ∈ T₂.ant
     | _ => True
-  root' := SaturatedConsistentTableau.lindenbaum (countermodel.rootSeed Λ A) (countermodel.rootSeed_consistent) |>.choose
+  root' := SaturatedConsistentTableau.lindenbaum (countermodel.rootSeed Λ A) (countermodel.rootSeed_consistent)
   root_rooted' := by
     intro B T;
     split;
@@ -795,9 +864,9 @@ noncomputable def countermodel (Λ : Axioms α) (A) [Fact (Λ ⊬ ⊥)] [Fact (�
       intro h;
       by_contra!;
       rcases this with ⟨hCD, hC, hD⟩;
-      have : ⟨C 🡒 D, h⟩ ∈ T.con := by
-        sorry;
-      sorry;
+      apply hCD;
+      apply SaturatedConsistentTableau.lindenbaum_subset_con;
+      grind;
     . trivial;
 
 variable [Fact (Λ ⊬ ⊥)] [Fact (∀ {A B}, Λ ⊢ A ⋎ B → (Λ ⊢ A) ∨ (Λ ⊢ B))]
@@ -819,24 +888,28 @@ lemma countermodel.truthlemma {T : (countermodel Λ A).World} (hB : B ∈ scope 
         grind;
     . contrapose!;
       intro h;
-      obtain ⟨S, hS₁, hS₂⟩ := SaturatedConsistentTableau.lindenbaum (Λ := Λ) (A := A) ⟨{⟨C, (by grind)⟩}, {⟨D, (by grind)⟩}⟩ $ by
+      apply Formula.iff_not_forced_imp.mpr;
+      use SaturatedConsistentTableau.lindenbaum ⟨{⟨C, (by grind)⟩}, {⟨D, (by grind)⟩}⟩ $ by
         by_contra;
         replace : Λ ⊢ C 🡒 D := by simpa using Tableau.iff_inconsistent.mp this;
         exact h $ T.mem_ant_of_provable this;
-      apply Formula.iff_not_forced_imp.mpr;
-      use S;
       refine ⟨?_, ?_, ?_⟩
       . intro _;
         left;
         exact T.iff_mem_con_not_mem_ant.mpr h;
-      . exact ihC (by grind) |>.mp $ hS₁ (by grind);
-      . apply ihD (by grind) |>.not.mp $ S.iff_mem_con_not_mem_ant.mp $ hS₂ (by grind)
+      . apply ihC (by grind) |>.mp;
+        apply SaturatedConsistentTableau.lindenbaum_subset_ant;
+        simp;
+      . apply ihD (by grind) |>.not.mp;
+        apply SaturatedConsistentTableau.iff_mem_con_not_mem_ant.mp;
+        apply SaturatedConsistentTableau.lindenbaum_subset_con;
+        simp;
 
 lemma countermodel.valid_axioms : ∀ B ∈ Λ, (countermodel Λ A) ⊨ B := by
   intro B hB T;
   exact countermodel.truthlemma _ |>.mp $ T.mem_ant_of_provable (B := ⟨B, mem_scope_of_mem_axioms hB⟩) (Provable.axm hB);
 
-theorem provable_of_all_finite_frame_frameValid : (∀ {κ : Type u}, [Fintype κ] → ∀ M : Model κ α, (∀ B ∈ Λ, M ⊨ B) → M ⊨ A) → Λ ⊢ A := by
+theorem finite_model_property : (∀ {κ : Type u}, [Fintype κ] → ∀ M : Model κ α, (∀ B ∈ Λ, M ⊨ B) → M ⊨ A) → Λ ⊢ A := by
   contrapose;
   intro h;
   push Not;
@@ -844,14 +917,13 @@ theorem provable_of_all_finite_frame_frameValid : (∀ {κ : Type u}, [Fintype �
   constructor;
   . exact countermodel.valid_axioms;
   . apply Formula.iff_Valid_exists_world_not_forced.mpr;
-    obtain ⟨S, hS_ant, hS_con⟩ := SaturatedConsistentTableau.lindenbaum (Λ := Λ) (A := A) ⟨∅, {⟨A, by grind⟩}⟩ $ by
+    use SaturatedConsistentTableau.lindenbaum (Λ := Λ) (A := A) ⟨∅, {⟨A, by grind⟩}⟩ $ by
       by_contra;
       replace : Λ ⊢ ⊤ 🡒 A := by simpa using Tableau.iff_inconsistent.mp this;
-      exact h $ Provable.mdp this (Provable.verum);
-    use S;
+      exact h $ Provable.mdp this (Provable.verum);;
     apply countermodel.truthlemma (by grind) |>.not.mp;
-    apply S.iff_mem_con_not_mem_ant.mp;
-    apply hS_con;
+    apply SaturatedConsistentTableau.iff_mem_con_not_mem_ant.mp;
+    apply SaturatedConsistentTableau.lindenbaum_subset_con;
     simp;
 
 theorem result : List.TFAE [
@@ -861,7 +933,9 @@ theorem result : List.TFAE [
 ] := by
   tfae_have 1 → 2 := by intro h _; apply soundness h;
   tfae_have 2 → 3 := by grind;
-  tfae_have 3 → 1 := provable_of_all_finite_frame_frameValid
+  tfae_have 3 → 1 := finite_model_property
   tfae_finish;
+
+#print axioms result
 
 end Completeness
