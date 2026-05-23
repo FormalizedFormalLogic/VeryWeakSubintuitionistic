@@ -29,37 +29,54 @@ variable {Λ : Axioms α} {A B C : Formula α}
 
 lemma provableVF_of_slashable : (Λ ∕ A) → (Λ ⊢ⱽ A) := by induction A <;> grind;
 
-instance disjunctive_of_iff_slashable_provable (h : ∀ {A}, Λ ∕ A ↔ Λ ⊢ⱽ A) : Λ.DisjunctiveVF := by
+lemma disjunctive_of_iff_slashable_provable (h : ∀ {A}, Λ ∕ A ↔ Λ ⊢ⱽ A) : Λ.DisjunctiveVF := by
   constructor;
   grind;
-
-/-
-lemma iff_slashable_provable_of_CNA (H : ∀ A ∈ Λ, A.IsCNA) : (Λ ∕ A) ↔ (Λ ⊢ A) := by
-  constructor;
-  . exact provable_of_slashable;
-  . intro h;
-    induction h with
-    | @axm A h =>
-      obtain ⟨B, rfl, _, _⟩ := Formula.of_isCNA $ H _ h;
-      constructor;
-      . exact Provable.axm h;
-      . intro hB;
-        have : Λ ⊢ ⊥ := .mdp (.axm h) (provable_of_slashable hB);
-        sorry;
-    | _ => grind;
-
-lemma disjunctive_of_CNA (H : ∀ A ∈ Λ, A.IsCNA) : (Λ ⊢ (A ⋎ B)) → (Λ ⊢ A) ∨ (Λ ⊢ B) := by
-  intro h;
-  rcases iff_slashable_provable_of_CNA H |>.mpr h with h | h;
-  . left; exact iff_slashable_provable_of_CNA H |>.mp h;
-  . right; exact iff_slashable_provable_of_CNA H |>.mp h;
--/
 
 
 namespace Formula
 
-def IsCNA : Formula α → Prop
-  | ∼A => A.Closed ∧ (∅ ⊬ᴵ A)
+def IsClosedNegativeAxiom : Formula α → Prop
+  | ∼A => A.Closed ∧ (∅ ⊢ᴵ ∼A)
   | _ => False
 
+@[grind =]
+lemma iff_isCNA : A.IsClosedNegativeAxiom ↔ (∃ B, A = ∼B ∧ B.Closed ∧ (∅ ⊢ᴵ ∼B)) := by
+  match A with
+  | #a | ⊥ | A ⋎ B | A ⋏ B => simp [IsClosedNegativeAxiom]
+  | A 🡒 B => dsimp [IsClosedNegativeAxiom]; grind;
+
 end Formula
+
+
+
+lemma provableInt_Int_of_provableVF_CNAExtension [Fact (∀ A ∈ Λ, A.IsClosedNegativeAxiom)] : Λ ⊢ⱽ A → ∅ ⊢ᴵ A := by
+  intro h;
+  induction h with
+  | axm h => have := Fact.out (p := ∀ A ∈ Λ, A.IsClosedNegativeAxiom) _ h; grind;
+  | _ => grind
+
+instance consistency_VF_CNAExtension [Fact (∀ A ∈ Λ, A.IsClosedNegativeAxiom)] : Λ.ConsistentVF := by
+  constructor;
+  by_contra hC;
+  apply consistency_of_Int $ provableInt_Int_of_provableVF_CNAExtension hC;
+
+lemma slashable_of_provableVF_CNAExtension [Fact (∀ A ∈ Λ, A.IsClosedNegativeAxiom)] : (Λ ⊢ⱽ A) → (Λ ∕ A) := by
+  intro h;
+  induction h with
+  | @axm B hB =>
+    have := Fact.out (p := ∀ A ∈ Λ, A.IsClosedNegativeAxiom) _ hB;
+    obtain ⟨C, rfl, hC₁, hC₂⟩ := Formula.iff_isCNA.mp this;
+    constructor;
+    . exact ProvableVF.axm hB;
+    . intro h;
+      have : ∅ ⊢ᴵ C := provableInt_Int_of_provableVF_CNAExtension $ provableVF_of_slashable h;
+      exact consistency_of_Int $ ProvableInt.mdp hC₂ this;
+  | _ => grind;
+
+instance disjunctive_VF_CNAExtension [Fact (∀ A ∈ Λ, A.IsClosedNegativeAxiom)] : Λ.DisjunctiveVF := by
+  apply disjunctive_of_iff_slashable_provable;
+  intro A;
+  constructor;
+  . exact provableVF_of_slashable;
+  . exact slashable_of_provableVF_CNAExtension;

@@ -1,6 +1,7 @@
 module
 
 public import VeryWeakSubintuitionistic.FMT.Basic
+public import VeryWeakSubintuitionistic.Slash
 
 @[expose] public section
 
@@ -274,8 +275,7 @@ noncomputable def lindenbaum (T : Tableau Λ A) (T_consis : T.Consistent) : Satu
 end SaturatedConsistentTableau
 
 
-
-section
+namespace FMTSemantics
 
 open Classical
 open ProvableVF
@@ -302,7 +302,7 @@ lemma countermodel.rootSeed_consistent {Λ : Axioms α} [Λ.ConsistentVF] [Λ.Di
   apply T.consistent;
   apply ruleI₃ (B := C.1) (C := D.1) <;> grind;
 
-noncomputable def countermodel (Λ : Axioms α) (A) [Λ.ConsistentVF] [Λ.DisjunctiveVF] : FMTModel (SaturatedConsistentTableau Λ A) α where
+noncomputable def countermodel (Λ : Axioms α) (A) [Λ.ConsistentVF] [Λ.DisjunctiveVF] : Model (SaturatedConsistentTableau Λ A) α where
   Val a T := (ha : #a ∈ scope Λ A) → ⟨#a, ha⟩ ∈ T.ant
   Rel' B T₁ T₂ :=
     match B with
@@ -323,7 +323,7 @@ noncomputable def countermodel (Λ : Axioms α) (A) [Λ.ConsistentVF] [Λ.Disjun
 
 variable [Λ.ConsistentVF] [Λ.DisjunctiveVF]
 
-lemma countermodel.truthlemma {T : (countermodel Λ A).World} (hB : B ∈ scope Λ A) : ⟨B, hB⟩ ∈ T.ant ↔ T ⊩ B := by
+lemma countermodel.truthlemma {T : (countermodel Λ A).World} (hB : B ∈ scope Λ A) : ⟨B, hB⟩ ∈ T.ant ↔ Forces T B := by
   induction B generalizing T with
   | atom a => tauto;
   | bot => grind;
@@ -361,7 +361,7 @@ lemma countermodel.valid_axioms : ∀ B ∈ Λ, (countermodel Λ A) ⊨ B := by
   intro B hB T;
   exact countermodel.truthlemma _ |>.mp $ T.mem_ant_of_provable (B := ⟨B, mem_scope_of_mem_axioms hB⟩) (axm hB);
 
-theorem finite_model_property : (∀ {κ : Type u}, [Finite κ] → ∀ M : FMTModel κ α, (∀ B ∈ Λ, M ⊨ B) → M ⊨ A) → Λ ⊢ⱽ A := by
+theorem finite_model_property : (∀ {κ : Type u}, [Finite κ] → ∀ M : Model κ α, (∀ B ∈ Λ, M ⊨ B) → M ⊨ A) → Λ ⊢ⱽ A := by
   contrapose;
   intro h;
   push Not;
@@ -378,14 +378,53 @@ theorem finite_model_property : (∀ {κ : Type u}, [Finite κ] → ∀ M : FMTM
     apply lindenbaum_subset_con;
     simp;
 
-theorem result : List.TFAE [
+theorem finite_frame_property (h_closed : ∀ B ∈ Λ, B.Closed)
+  : (∀ {κ : Type u}, [Finite κ] → ∀ F : Frame κ α, (∀ B ∈ Λ, F ⊨ B) → F ⊨ A) → Λ ⊢ⱽ A := by
+  intro h;
+  apply finite_model_property;
+  intro κ hκ M hM;
+  apply h;
+  grind [iff_FrameValid_ModelValid_of_closed];
+
+theorem result_model : List.TFAE [
   Λ ⊢ⱽ A,
-  ∀ {κ : Type u}, ∀ M : FMTModel κ α, (∀ φ ∈ Λ, M ⊨ φ) → M ⊨ A,
-  ∀ {κ : Type u}, [Finite κ] → ∀ M : FMTModel κ α, (∀ φ ∈ Λ, M ⊨ φ) → M ⊨ A
+  ∀ {κ : Type u}, ∀ M : Model κ α, (∀ B ∈ Λ, M ⊨ B) → M ⊨ A,
+  ∀ {κ : Type u}, [Finite κ] → ∀ M : Model κ α, (∀ B ∈ Λ, M ⊨ B) → M ⊨ A
 ] := by
-  tfae_have 1 → 2 := by intro h _; apply soundness h;
+  tfae_have 1 → 2 := by intro h _; apply soundness_model h;
   tfae_have 2 → 3 := by grind;
   tfae_have 3 → 1 := finite_model_property
   tfae_finish;
 
-end
+theorem result_frame (h_closed : ∀ B ∈ Λ, B.Closed) : List.TFAE [
+  Λ ⊢ⱽ A,
+  ∀ {κ : Type u}, ∀ F : Frame κ α, (∀ B ∈ Λ, F ⊨ B) → F ⊨ A,
+  ∀ {κ : Type u}, [Finite κ] → ∀ F : Frame κ α, (∀ B ∈ Λ, F ⊨ B) → F ⊨ A
+] := by
+  tfae_have 1 → 2 := by intro h _; apply soundness_frame h;
+  tfae_have 2 → 3 := by grind;
+  tfae_have 3 → 1 := finite_frame_property (by grind);
+  tfae_finish;
+
+theorem VF_completeness : List.TFAE [
+  ∅ ⊢ⱽ A,
+  ∀ {κ : Type u}, ∀ F : Frame κ α, F ⊨ A,
+  ∀ {κ : Type u}, [Finite κ] → ∀ F : Frame κ α, F ⊨ A
+] := by
+  have : Fact (∀ A ∈ (∅ : Axioms α), A.IsClosedNegativeAxiom) := ⟨by grind⟩;
+  simpa using result_frame (Λ := ∅) (by simp);
+
+omit [DecidableEq α] in
+lemma iff_validates_negnegtop {F : Frame κ α} : (F ⊨ ∼∼⊤) ↔ (∀ x : F.World, ∃ y, x ≺[∼⊤] y) := by
+  apply Iff.trans $ iff_frameValid_closed_dn (by grind);
+  simp;
+
+theorem VFSer_completeness : List.TFAE [
+  {∼∼⊤} ⊢ⱽ A,
+  ∀ {κ : Type u}, ∀ F : Frame κ α, (∀ x : F.World, ∃ y, x ≺[∼⊤] y) → F ⊨ A,
+  ∀ {κ : Type u}, [Finite κ] → ∀ F : Frame κ α, (∀ x : F.World, ∃ y, x ≺[∼⊤] y) → F ⊨ A
+] := by
+  have : Fact (∀ A ∈ ({∼∼⊤} : Axioms α), A.IsClosedNegativeAxiom) := ⟨by grind⟩;
+  simpa [iff_validates_negnegtop] using result_frame (Λ := {∼∼⊤}) (by grind);
+
+end FMTSemantics

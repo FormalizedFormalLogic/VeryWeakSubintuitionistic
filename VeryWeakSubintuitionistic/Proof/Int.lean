@@ -241,6 +241,17 @@ lemma distributeAndOr : Λ ⊢ᴵ (A ⋏ (B ⋎ C)) 🡒 ((A ⋏ B) ⋎ (A ⋏ C
       simp;
   . exact DeducibleInt.andElimRuleR (A := A) $ DeducibleInt.ofContext (by simp);
 
+@[simp, grind .]
+lemma dni : Λ ⊢ᴵ A 🡒 ∼∼A := by
+  apply DeducibleInt.iff_singleton_deducible_provable.mp;
+  apply DeducibleInt.drop_ctx;
+  have h₁ : {∼A, A} ⊢ᴵ[Λ] ∼A := DeducibleInt.ofContext (by simp);
+  have h₂ : {∼A, A} ⊢ᴵ[Λ] A := DeducibleInt.ofContext (by simp);
+  exact DeducibleInt.mdp h₁ h₂;
+
+@[grind <=]
+lemma dniRule : Λ ⊢ᴵ A → Λ ⊢ᴵ ∼∼A := λ h => mdp dni h
+
 end ProvableInt
 
 
