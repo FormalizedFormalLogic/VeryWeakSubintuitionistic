@@ -1,6 +1,6 @@
 module
 
-public import VeryWeakSubintuitionistic.Syntax
+public import VeryWeakSubintuitionistic.Propositional.Syntax
 
 @[expose] public section
 

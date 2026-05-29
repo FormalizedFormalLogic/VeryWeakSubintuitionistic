@@ -1,8 +1,8 @@
 module
 
-public import VeryWeakSubintuitionistic.Proof.VF
-public import VeryWeakSubintuitionistic.Kripke.Basic
-public import VeryWeakSubintuitionistic.FMT.Basic
+public import VeryWeakSubintuitionistic.Propositional.Proof.VF
+public import VeryWeakSubintuitionistic.Propositional.Kripke.Basic
+public import VeryWeakSubintuitionistic.Propositional.FMT.Basic
 
 @[expose] public section
 

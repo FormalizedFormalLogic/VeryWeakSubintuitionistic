@@ -1,7 +1,7 @@
 module
 
-public import VeryWeakSubintuitionistic.FMT.Basic
-public import VeryWeakSubintuitionistic.Slash
+public import VeryWeakSubintuitionistic.Propositional.FMT.Basic
+public import VeryWeakSubintuitionistic.Propositional.Slash
 
 @[expose] public section
 

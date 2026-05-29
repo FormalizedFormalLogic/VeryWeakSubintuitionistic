@@ -1,6 +1,6 @@
 module
 
-public import VeryWeakSubintuitionistic.Proof.Basic
+public import VeryWeakSubintuitionistic.Propositional.Proof.Basic
 
 @[expose] public section
 
