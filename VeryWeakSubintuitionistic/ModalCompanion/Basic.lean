@@ -161,6 +161,54 @@ theorem modalToProp_truthlemma :
         (ihA y).mp hAc
       exact (ihB y).mpr (h (.inl y) hRP hAp)
 
+private lemma modalToProp_root_validates_of_forces :
+    ∀ (C : Formula α), C.Closed →
+      FMTSemantics.Forces (M := modalToPropModel M_M) (.inr ()) C →
+      ∀ y : κ, Modal.FMT.Forced (M := M_M) y (corsi C) := by
+  intro C
+  induction C with
+  | atom a => intro hC; exact hC.elim
+  | bot => intro _ h; exact h.elim
+  | and C D ihC ihD =>
+    intro hC h y
+    obtain ⟨hCC, hDC⟩ := hC
+    obtain ⟨hCv, hDv⟩ := h
+    have hCm := ihC hCC hCv y
+    have hDm := ihD hDC hDv y
+    show ¬ (Modal.FMT.Forced (M := M_M) y (corsi C)
+          → ¬ Modal.FMT.Forced (M := M_M) y (corsi D))
+    tauto
+  | or C D ihC ihD =>
+    intro hC h y
+    obtain ⟨hCC, hDC⟩ := hC
+    show ¬ Modal.FMT.Forced (M := M_M) y (corsi C)
+          → Modal.FMT.Forced (M := M_M) y (corsi D)
+    rcases h with hCv | hDv
+    · have hCm := ihC hCC hCv y
+      tauto
+    · have hDm := ihD hDC hDv y
+      tauto
+  | imp C D _ _ =>
+    intro _ h y
+    show ∀ z, y ≺[□((corsi C) 🡒 (corsi D))] z → (z ⊩ corsi C → z ⊩ corsi D)
+    intro z _ hCm
+    have hCp : FMTSemantics.Forces (M := modalToPropModel M_M) (.inl z) C :=
+      (modalToProp_truthlemma M_M C z).mp hCm
+    have hRP : modalToPropRel M_M (C 🡒 D) (.inr ()) (.inl z) := trivial
+    exact (modalToProp_truthlemma M_M D z).mpr (h (.inl z) hRP hCp)
+
+theorem modalToProp_notForces_closed_of_neg
+    {C : Formula α} (hC : C.Closed)
+    (hVal : ∀ y : κ, ¬ Modal.FMT.Forced (M := M_M) y (corsi C)) :
+    ∀ x : (modalToPropModel M_M).World,
+      ¬ FMTSemantics.Forces (M := modalToPropModel M_M) x C := by
+  intro x hX
+  match x, hX with
+  | .inl k, hX => exact hVal k ((modalToProp_truthlemma M_M C k).mpr hX)
+  | .inr (), hX =>
+    exact hVal M_M.root'
+      (modalToProp_root_validates_of_forces M_M C hC hX M_M.root')
+
 end ModalToProp
 
 end ModalCompanion
