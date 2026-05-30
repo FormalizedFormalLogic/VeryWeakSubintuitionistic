@@ -97,31 +97,31 @@ section ModalToProp
 
 variable {κ : Type*} (M_M : Modal.FMT.Model κ α)
 
-abbrev ModalToPropWorld (κ : Type*) := Option κ
+abbrev ModalToPropWorld (κ : Type*) := κ ⊕ Unit
 
 def modalToPropRel :
     Formula α → ModalToPropWorld κ → ModalToPropWorld κ → Prop
-  | _,        none,      _         => True
-  | _,        some _,    none      => False
-  | (C 🡒 D), some xK,   some yK   => M_M.Rel' (□((corsi C) 🡒 (corsi D))) xK yK
-  | _,        some _,    some _    => True
+  | _,        .inr (),  _         => True
+  | _,        .inl _,   .inr ()   => False
+  | (C 🡒 D), .inl xK,  .inl yK   => M_M.Rel' (□((corsi C) 🡒 (corsi D))) xK yK
+  | _,        .inl _,   .inl _    => True
 
 def modalToPropFrame : FMTSemantics.Frame (ModalToPropWorld κ) α where
   Rel' := modalToPropRel M_M
-  root' := none
+  root' := .inr ()
   root_rooted' := by intros; exact trivial
 
 def modalToPropModel : FMTSemantics.Model (ModalToPropWorld κ) α where
   toFrame := modalToPropFrame M_M
   Val a x :=
     match x with
-    | none   => True
-    | some k => M_M.Val a k
+    | .inr () => True
+    | .inl k  => M_M.Val a k
 
 theorem modalToProp_truthlemma :
     ∀ (A : Formula α) (x : κ),
       Modal.FMT.Forced (M := M_M) x (corsi A)
-        ↔ FMTSemantics.Forces (M := modalToPropModel M_M) (some x) A := by
+        ↔ FMTSemantics.Forces (M := modalToPropModel M_M) (.inl x) A := by
   intro A
   induction A with
   | atom a => intro x; rfl
@@ -132,8 +132,8 @@ theorem modalToProp_truthlemma :
     have hB := ihB x
     show ¬ (Modal.FMT.Forced (M := M_M) x (corsi A)
           → ¬ Modal.FMT.Forced (M := M_M) x (corsi B)) ↔ _
-    show _ ↔ (FMTSemantics.Forces (M := modalToPropModel M_M) (some x) A
-            ∧ FMTSemantics.Forces (M := modalToPropModel M_M) (some x) B)
+    show _ ↔ (FMTSemantics.Forces (M := modalToPropModel M_M) (.inl x) A
+            ∧ FMTSemantics.Forces (M := modalToPropModel M_M) (.inl x) B)
     tauto
   | or A B ihA ihB =>
     intro x
@@ -141,25 +141,25 @@ theorem modalToProp_truthlemma :
     have hB := ihB x
     show (¬ Modal.FMT.Forced (M := M_M) x (corsi A)
           → Modal.FMT.Forced (M := M_M) x (corsi B)) ↔ _
-    show _ ↔ (FMTSemantics.Forces (M := modalToPropModel M_M) (some x) A
-            ∨ FMTSemantics.Forces (M := modalToPropModel M_M) (some x) B)
+    show _ ↔ (FMTSemantics.Forces (M := modalToPropModel M_M) (.inl x) A
+            ∨ FMTSemantics.Forces (M := modalToPropModel M_M) (.inl x) B)
     tauto
   | imp A B ihA ihB =>
     intro x
     constructor
     · intro h y hRP hAp
       match y, hRP, hAp with
-      | some yK, hRP, hAp =>
+      | .inl yK, hRP, hAp =>
         have hRM : M_M.Rel' (□((corsi A) 🡒 (corsi B))) x yK := hRP
         have hAc : Modal.FMT.Forced (M := M_M) yK (corsi A) := (ihA yK).mpr hAp
         exact (ihB yK).mp (h yK hRM hAc)
-      | none, hRP, _ =>
+      | .inr (), hRP, _ =>
         exact (hRP : False).elim
     · intro h y hRM hAc
-      have hRP : modalToPropRel M_M (A 🡒 B) (some x) (some y) := hRM
-      have hAp : FMTSemantics.Forces (M := modalToPropModel M_M) (some y) A :=
+      have hRP : modalToPropRel M_M (A 🡒 B) (.inl x) (.inl y) := hRM
+      have hAp : FMTSemantics.Forces (M := modalToPropModel M_M) (.inl y) A :=
         (ihA y).mp hAc
-      exact (ihB y).mpr (h (some y) hRP hAp)
+      exact (ihB y).mpr (h (.inl y) hRP hAp)
 
 end ModalToProp
 
