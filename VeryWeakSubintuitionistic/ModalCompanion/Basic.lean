@@ -182,6 +182,63 @@ theorem modalToProp_notForces_closed_of_neg
 
 end ModalToProp
 
+
+def starAxiom : Formula α → Modal.Formula α
+  | A 🡒 ⊥ => ∼(corsi A)
+  | A     => corsi A
+
+@[simp] lemma starAxiom_neg (A : Formula α) : starAxiom (∼A) = ∼(corsi A) := rfl
+
+private lemma closed_of_CNA {B : Formula α} (h : B.IsClosedNegativeAxiom) : B.Closed := by
+  obtain ⟨C, rfl, hCClosed, _⟩ := Formula.iff_isCNA.mp h;
+  exact ⟨hCClosed, trivial⟩;
+
+section ModalCompanionThm
+
+variable [DecidableEq α]
+
+def starAxioms (X : Axioms α) : Modal.Axioms α := X.image starAxiom
+
+theorem modal_companion
+    {X : Axioms α} (hX : ∀ B ∈ X, B.IsClosedNegativeAxiom)
+    [Fact ((starAxioms X) ⊬ᴺ ⊥)]
+    (A : Formula α) :
+    (X ⊢ⱽ A) ↔ ((starAxioms X) ⊢ᴺ corsi A) := by
+  haveI : Fact (∀ B ∈ X, B.IsClosedNegativeAxiom) := ⟨hX⟩;
+  constructor;
+  · intro h;
+    apply Modal.FMT.finite_model_property;
+    intro κ _ M_M hValid x;
+    apply (modalToProp_truthlemma M_M A x).mpr;
+    apply FMTSemantics.soundness_model h (modalToPropModel M_M) ?_;
+    intro B hB;
+    obtain ⟨C, rfl, hCClosed, _⟩ := Formula.iff_isCNA.mp (hX B hB);
+    intro x' y _ hCY;
+    have hValC : ∀ y, ¬ Modal.FMT.Forced (M := M_M) y (corsi C) := by
+      intro y';
+      have hMem : ∼(corsi C) ∈ starAxioms X := by
+        simp only [starAxioms, Finset.mem_image];
+        exact ⟨∼C, hB, rfl⟩;
+      exact hValid _ hMem y';
+    exact modalToProp_notForces_closed_of_neg M_M hCClosed hValC y hCY;
+  · intro h;
+    apply FMTSemantics.finite_frame_property (fun B hB => closed_of_CNA (hX B hB));
+    intro κ _ F hF V x;
+    apply (propToModal_truthlemma ⟨F, V⟩ A x).mpr;
+    apply Modal.FMT.soundness_model h (propToModalModel ⟨F, V⟩) ?_ x;
+    intro B hB;
+    obtain ⟨B', hB'X, rfl⟩ := Finset.mem_image.mp hB;
+    obtain ⟨C, rfl, hCClosed, _⟩ := Formula.iff_isCNA.mp (hX B' hB'X);
+    intro y hYC;
+    have hPC : FMTSemantics.Forces (M := ⟨F, V⟩) y C :=
+      (propToModal_truthlemma ⟨F, V⟩ C y).mpr hYC;
+    have hFC : F ⊨ ∼C := hF (∼C) hB'X;
+    have hNF : ∀ x : F.World, ¬ FMTSemantics.FrameForces x C :=
+      (FMTSemantics.iff_FrameValid_neg_of_closed hCClosed).mp hFC;
+    exact hNF y ((FMTSemantics.iff_FrameForces_Forces_of_closed hCClosed).mpr hPC);
+
+end ModalCompanionThm
+
 end ModalCompanion
 
 end
