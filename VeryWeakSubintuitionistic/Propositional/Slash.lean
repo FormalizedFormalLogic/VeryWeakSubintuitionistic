@@ -46,6 +46,9 @@ lemma iff_isCNA : A.IsClosedNegativeAxiom ↔ (∃ B, A = ∼B ∧ B.Closed ∧ 
   | #a | ⊥ | A ⋎ B | A ⋏ B => simp [IsClosedNegativeAxiom]
   | A 🡒 B => dsimp [IsClosedNegativeAxiom]; grind;
 
+@[grind →]
+lemma isClosed_of_isCNA {A : Formula α} : A.IsClosedNegativeAxiom → A.Closed := by grind;
+
 end Formula
 
 

@@ -79,6 +79,7 @@ def modalToPropModel (MM : Modal.FMT.Model κ α) : FMTSemantics.Model (κ ⊕ U
     | .inl k  => MM.Val a k
     | .inr () => True
 
+/-- Lemma 6.9 -/
 theorem modalToProp_truthlemma {x : MM.World} :
   Modal.FMT.Forced (M := MM) x (A.corsi) ↔ FMTSemantics.Forces (M := modalToPropModel MM) (.inl x) A := by
   induction A generalizing x with
@@ -132,48 +133,9 @@ end ModalToProp
 
 
 
-namespace Formula
-
-@[grind]
-def IsNegation : Formula α → Prop
-  | ∼_ => True
-  | _ => False
-
-instance : DecidablePred (IsNegation : Formula α → Prop) := by
-  intro A;
-  match A with
-  | ∼_ => exact isTrue trivial
-  | #_ | ⊥ | _ ⋏ _ | _ ⋎ _
-  | _ 🡒 #_ | _ 🡒 (_ ⋏ _) | _ 🡒 (_ 🡒 _)  | _ 🡒 (_ ⋎ _)
-    => exact isFalse (by grind);
-
-end Formula
 
 
 variable {α : Type u} [DecidableEq α]
-
-namespace Formula
-
-def cases_neg {P : Formula α → Prop}
-  (falsum : P (⊥ : Formula α))
-  (atom : ∀ a, P (#a))
-  (and : ∀ A B, P (A ⋏ B))
-  (or : ∀ A B, P (A ⋎ B))
-  (imp : ∀ A B, B ≠ (⊥ : Formula α) → P (A 🡒 B))
-  (neg : ∀ A, P (∼A))
-  : ∀ A, P A := by
-  intro A;
-  match A with
-  | ⊥ | #_ | _ ⋏ _ | _ ⋎ _
-  | _ 🡒 ⊥ | _ 🡒 #_
-  | _ 🡒 (_ ⋏ _) | _ 🡒 (_ ⋎ _) | _ 🡒 (_ 🡒 _)
-    => grind;
-
-omit [DecidableEq α] in
-@[grind →]
-lemma isClosed_of_isCNA {A : Formula α} : A.IsClosedNegativeAxiom → A.Closed := by grind;
-
-end Formula
 
 namespace Axioms
 
@@ -193,51 +155,127 @@ lemma mem_star_of_mem_neg {B : Formula α} (hB : ∼B ∈ Λ) : ∼(B.corsi) ∈
 end Axioms
 
 
+namespace Modal.Formula
 
-theorem modal_companion
-  {Λ : Axioms α} (hX : ∀ B ∈ Λ, B.IsClosedNegativeAxiom)
-  [Fact ((Λ.star) ⊬ᴺ ⊥)] [Axioms.DisjunctiveVF Λ]
-  : (Λ ⊢ⱽ A) ↔ ((Λ.star) ⊢ᴺ A.corsi) := by
-  have : Fact (∀ B ∈ Λ, B.IsClosedNegativeAxiom) := ⟨hX⟩;
+@[grind]
+def negRepeat : ℕ → Formula α → Formula α
+  | 0    , A => A
+  | n + 1, A => ∼(negRepeat n A)
+
+notation "∼^[" n "]" A => negRepeat n A
+
+lemma negRepeat_succ_rw {n : ℕ} : (∼^[2 * (n + 1)]A) = ∼(∼^[2 * n](∼A)) := by
+  induction n <;> simp_all [negRepeat];
+
+end Modal.Formula
+
+
+namespace Formula
+
+variable {C : Formula α}
+
+omit [DecidableEq α] in
+@[simp, grind .]
+lemma top_neq_corsi : (⊤ : Modal.Formula α) ≠ C.corsi := by induction C <;> grind [Formula.corsi];
+
+omit [DecidableEq α] in
+@[simp, grind .]
+lemma double_negRepeat_top_neq_corsi {n} {C : Formula α} : (∼^[2 * n]⊤) ≠ C.corsi := by
+  match n with
+  | 0 => grind [top_neq_corsi];
+  | n + 1 => induction C <;> grind [Formula.corsi, double_negRepeat_top_neq_corsi (n := n)];
+
+omit [DecidableEq α] in
+@[simp, grind .]
+lemma double_negRepeat_bot_neq_corsi_imp {n} {C D : Formula α} : (∼^[2 * n]⊥) ≠ (C.corsi 🡒 D.corsi) := by
+  cases n <;> grind [Modal.Formula.negRepeat_succ_rw, Modal.Formula.negRepeat];
+
+end Formula
+
+
+namespace Modal.FMT
+
+omit [DecidableEq α] in
+@[grind =]
+lemma notForces_double_negRepeat {M : Model κ α} {x : M.World} : (x ⊩ (∼^[2 * n]A)) ↔ (x ⊩ A) := by
+  induction n with
+  | zero => grind;
+  | succ n ih =>
+    apply Iff.trans ?_ ih;
+    simp [Modal.Formula.negRepeat];
+    grind;
+
+end Modal.FMT
+
+
+section
+
+variable {Λ : Axioms α} {A : Formula α}
+
+lemma provableN_star_of_provableVF
+  [Fact (∀ B ∈ Λ, B.IsClosedNegativeAxiom)] [Fact ((Λ.star) ⊬ᴺ ⊥)]
+  : (Λ ⊢ⱽ A) → (Λ.star ⊢ᴺ A.corsi) := by
+  have hCNA : ∀ B ∈ Λ, B.IsClosedNegativeAxiom := Fact.out;
+  intro h;
+  apply Modal.FMT.finite_model_property;
+  intro κ _ MM hValid x;
+  apply (modalToProp_truthlemma).mpr;
+  apply FMTSemantics.soundness_model h (modalToPropModel MM);
+  intro B hB;
+  obtain ⟨C, rfl, hCClosed, _⟩ := Formula.iff_isCNA.mp (Fact.elim (p := ∀ B ∈ Λ, B.IsClosedNegativeAxiom) inferInstance B hB);
+  intro y z Ryz hzC;
+  have hValC : ∀ y, ¬ Modal.FMT.Forced (M := MM) y (C.corsi) := by
+    intro y';
+    have hMem : ∼(C.corsi) ∈ Λ.star := Axioms.mem_star_of_mem_neg hB;
+    exact hValid _ hMem y';
+  exact modalToProp_notForces_closed_of_neg hCClosed hValC hzC;
+
+lemma provableN_star_repeatNeg_of_provableN_star {N : Finset ℕ} : Λ.star ⊢ᴺ A.corsi → (Λ.star ∪ N.image (λ n => ∼□∼^[2 * n]⊥)) ⊢ᴺ A.corsi := by
+  apply Modal.ProvableN.ofSubsetAxm;
+  grind;
+
+lemma provableVF_of_provableN_star_repeatNeg
+  {N : Finset ℕ}
+  [Fact (∀ B ∈ Λ, B.IsClosedNegativeAxiom)]
+  [Fact (Λ.star ∪ Finset.image (λ n ↦ ∼□∼^[2 * n]⊥) N ⊬ᴺ ⊥)]
+  : (Λ.star ∪ N.image (λ n => ∼□(∼^[2 * n]⊥))) ⊢ᴺ A.corsi → Λ ⊢ⱽ A := by
+  have hCNA : ∀ B ∈ Λ, B.IsClosedNegativeAxiom := Fact.out;
+  contrapose;
+  intro h;
+  replace h := FMTSemantics.result_frame (Λ := Λ) (by grind) |>.not.out 0 1 |>.mp h;
+  push Not at h;
+  obtain ⟨_, PF, hPF, h⟩ := h;
+  obtain ⟨PV, x, hx⟩ := FMTSemantics.iff_notFrameValid_exists_model_world.mp h;
+  apply Modal.FMT.result_model.not.out 0 1 |>.mpr;
+  push Not;
+  use ‹_›, propToModalModel ⟨PF, PV⟩;
   constructor;
-  · intro h;
-    apply Modal.FMT.finite_model_property;
-    intro κ _ MM hValid x;
-    apply (modalToProp_truthlemma).mpr;
-    apply FMTSemantics.soundness_model h (modalToPropModel MM);
-    intro B hB;
-    obtain ⟨C, rfl, hCClosed, _⟩ := Formula.iff_isCNA.mp (hX B hB);
-    intro y z Ryz hzC;
-    have hValC : ∀ y, ¬ Modal.FMT.Forced (M := MM) y (C.corsi) := by
-      intro y';
-      have hMem : ∼(C.corsi) ∈ Λ.star := Axioms.mem_star_of_mem_neg hB;
-      exact hValid _ hMem y';
-    exact modalToProp_notForces_closed_of_neg hCClosed hValC hzC;
-  · contrapose;
-    intro h;
-    replace h := FMTSemantics.result_frame (Λ := Λ) (by grind) |>.not.out 0 1 |>.mp h;
-    push Not at h;
-    obtain ⟨_, PF, hPF, h⟩ := h;
-    obtain ⟨PV, x, hx⟩ := FMTSemantics.iff_notFrameValid_exists_model_world.mp h;
-    apply Modal.FMT.result_model.not.out 0 1 |>.mpr;
-    push Not;
-    use ‹_›, propToModalModel ⟨PF, PV⟩;
-    constructor;
-    . intro B hB;
-      obtain ⟨C, hC₁, hC₂⟩ := Finset.mem_filterMap _ |>.mp hB;
+  . intro B hB;
+    simp only [Finset.mem_union, Finset.mem_image] at hB;
+    rcases hB with (hB | ⟨n, hN, rfl⟩);
+    . obtain ⟨C, hC₁, hC₂⟩ := Finset.mem_filterMap _ |>.mp hB;
       split at hC₂;
       . simp only [Option.some.injEq] at hC₂;
         subst hC₂;
         rename_i C;
-        obtain ⟨D, _, _, _⟩ := Formula.iff_isCNA.mp $ hX (∼C) ‹_›;
+        obtain ⟨D, _, _, _⟩ := Formula.iff_isCNA.mp $ hCNA (∼C) ‹_›;
         intro y;
         apply Modal.FMT.forces_not.mpr;
         apply propToModal_truthlemma.not.mp;
         exact FMTSemantics.iff_FrameForces_Forces_of_closed (by grind) |>.not.mp
           $ FMTSemantics.iff_FrameValid_neg_of_closed (by grind) |>.mp (hPF _ hC₁) y;
       . contradiction;
-    . replace hx := propToModal_truthlemma.not.mp hx;
-      apply Modal.FMT.iff_Valid_exists_world_not_Forces.mpr;
-      use x;
+    . intro y;
+      apply Modal.FMT.notForces_box.mpr;
+      use y;
+      constructor;
+      . intro C D;
+        grind;
+      . grind;
+  . replace hx := propToModal_truthlemma.not.mp hx;
+    apply Modal.FMT.iff_Valid_exists_world_not_Forces.mpr;
+    use x;
+
+end
 
 end

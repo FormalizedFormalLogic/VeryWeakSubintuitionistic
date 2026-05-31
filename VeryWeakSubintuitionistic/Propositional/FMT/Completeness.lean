@@ -406,6 +406,9 @@ theorem result_frame (h_closed : ∀ B ∈ Λ, B.Closed) : List.TFAE [
   tfae_have 3 → 1 := finite_frame_property (by grind);
   tfae_finish;
 
+
+
+
 theorem VF_completeness : List.TFAE [
   ∅ ⊢ⱽ A,
   ∀ {κ : Type u}, ∀ F : Frame κ α, F ⊨ A,

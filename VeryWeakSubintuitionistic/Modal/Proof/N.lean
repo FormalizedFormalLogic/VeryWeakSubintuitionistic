@@ -80,6 +80,8 @@ lemma andIntroRule (hA : Λ ⊢ᴺ A) (hB : Λ ⊢ᴺ B) : Λ ⊢ᴺ A ⋏ B := 
 
 @[simp, grind .] lemma verum : Λ ⊢ᴺ ⊤ := by simp;
 
+lemma ofSubsetAxm (h : Λ₁ ⊆ Λ₂) : Λ₁ ⊢ᴺ A → Λ₂ ⊢ᴺ A := λ ⟨h₁⟩ => ⟨ProofN.ofSubsetAxm h h₁⟩
+
 @[grind =>] lemma dneRule (hA : Λ ⊢ᴺ ∼∼A) : Λ ⊢ᴺ A := mdp dne hA
 
 lemma impTransRule (hAB : Λ ⊢ᴺ A 🡒 B) (hBC : Λ ⊢ᴺ B 🡒 C) : Λ ⊢ᴺ A 🡒 C := by

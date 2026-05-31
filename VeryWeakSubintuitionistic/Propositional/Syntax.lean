@@ -8,7 +8,7 @@ variable {α : Type*}
 
 inductive Formula (α : Type u) : Type u
   | atom   : α → Formula α
-  | bot : Formula α
+  | bot    : Formula α
   | and    : Formula α → Formula α → Formula α
   | or     : Formula α → Formula α → Formula α
   | imp    : Formula α → Formula α → Formula α
@@ -71,6 +71,22 @@ def Closed : Formula α → Prop
   | A ⋎ B
   | A ⋏ B
   | A 🡒 B => A.Closed ∧ B.Closed
+
+
+def cases_neg {P : Formula α → Prop}
+  (bot : P (⊥ : Formula α))
+  (atom : ∀ a, P (#a))
+  (and : ∀ A B, P (A ⋏ B))
+  (or : ∀ A B, P (A ⋎ B))
+  (imp : ∀ A B, B ≠ (⊥ : Formula α) → P (A 🡒 B))
+  (neg : ∀ A, P (∼A))
+  : ∀ A, P A := by
+  intro A;
+  match A with
+  | ⊥ | #_ | _ ⋏ _ | _ ⋎ _
+  | _ 🡒 ⊥ | _ 🡒 #_
+  | _ 🡒 (_ ⋏ _) | _ 🡒 (_ ⋎ _) | _ 🡒 (_ 🡒 _)
+    => grind;
 
 end Formula
 
