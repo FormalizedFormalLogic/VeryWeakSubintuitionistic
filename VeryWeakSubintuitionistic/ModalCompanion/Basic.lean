@@ -275,6 +275,37 @@ lemma provableVF_of_provableN_star_repeatNeg
     apply Modal.FMT.iff_Valid_exists_world_not_Forces.mpr;
     use x;
 
+/-- Theorem 6.11 -/
+theorem modal_companion [Fact (∀ B ∈ Λ, B.IsClosedNegativeAxiom)] {A : Formula α} {N : Finset ℕ} : List.TFAE [
+  Λ ⊢ⱽ A,
+  Λ.star ⊢ᴺ A.corsi,
+  (Λ.star ∪ N.image (λ n => ∼□(∼^[2 * n]⊥))) ⊢ᴺ A.corsi
+] := by
+  tfae_have 1 → 2 := provableN_star_of_provableVF;
+  tfae_have 2 → 3 := provableN_star_repeatNeg_of_provableN_star;
+  tfae_have 3 → 1 := provableVF_of_provableN_star_repeatNeg;
+  tfae_finish;
+
+
+/-- Corollary 6.12 -/
+theorem modal_companion_VF {A : Formula α} {N : Finset ℕ} : List.TFAE [
+  ∅ ⊢ⱽ A,
+  ∅ ⊢ᴺ A.corsi,
+  (N.image (λ n => ∼□(∼^[2 * n]⊥))) ⊢ᴺ A.corsi
+] := by
+  have : Fact (∀ B ∈ (∅ : Axioms α), B.IsClosedNegativeAxiom) := ⟨by grind⟩;
+  simpa [Axioms.star] using modal_companion (Λ := ∅);
+
+/-- Corollary 6.13 -/
+theorem modal_companion_VFSer {A : Formula α} {N : Finset ℕ} : List.TFAE [
+  ({(∼∼⊤ : Formula α)}) ⊢ⱽ A,
+  ({(∼□∼□⊤ : Modal.Formula α)}) ⊢ᴺ A.corsi,
+  (insert (∼□∼□⊤ : Modal.Formula α) (N.image (λ n => ∼□(∼^[2 * n]⊥)))) ⊢ᴺ A.corsi
+] := by
+  have : Fact (∀ B ∈ ({ (∼∼⊤ : Formula α) } : Axioms α), B.IsClosedNegativeAxiom) := ⟨by grind⟩;
+  simpa [Axioms.star] using modal_companion (Λ := { (∼∼⊤ : Formula α) });
+
+
 end
 
 end

@@ -89,6 +89,11 @@ variable {κ α : Type*} {F : Frame κ α} {M : Model κ α} {A B C : Formula α
 @[grind .] lemma frameValid_andElimL : F ⊨ (A ⋏ B) 🡒 A := by grind;
 @[grind .] lemma frameValid_andElimR : F ⊨ (A ⋏ B) 🡒 B := by grind;
 
+@[grind .]
+lemma frameValid_orElim : F ⊨ (A ⋎ B) 🡒 (A 🡒 C) 🡒 (B 🡒 C) 🡒 C := by
+  intro V x hAB hAC hBC;
+  grind;
+
 @[grind =>] lemma frameValid_mdp (hAB : F ⊨ A 🡒 B) (hA : F ⊨ A) : F ⊨ B := by intro V x; exact hAB V x $ hA V x;
 @[grind <=] lemma frameValid_nec (hA : F ⊨ A) : F ⊨ □A := by intro V x y Rxy; exact hA V y;
 

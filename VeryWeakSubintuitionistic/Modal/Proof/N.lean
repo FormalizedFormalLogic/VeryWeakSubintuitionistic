@@ -12,11 +12,12 @@ inductive ProofN (Λ : Axioms α) : Formula α → Type _
 | axm {A}        : A ∈ Λ → ProofN Λ A
 | implyK {A B}   : ProofN Λ $ A 🡒 B 🡒 A
 | implyS {A B C} : ProofN Λ $ (A 🡒 B 🡒 C) 🡒 (A 🡒 B) 🡒 (A 🡒 C)
-| efq {A}            : ProofN Λ $ ⊥ 🡒 A
-| dne {A}            : ProofN Λ $ ∼∼A 🡒 A
+| efq {A}        : ProofN Λ $ ⊥ 🡒 A
+| dne {A}        : ProofN Λ $ ∼∼A 🡒 A
 | andElimL {A B} : ProofN Λ $ (A ⋏ B) 🡒 A
 | andElimR {A B} : ProofN Λ $ (A ⋏ B) 🡒 B
 | andIntro {A B} : ProofN Λ $ A 🡒 B 🡒 (A ⋏ B)
+| orElim {A B C} : ProofN Λ $ A ⋎ B 🡒 (A 🡒 C) 🡒 (B 🡒 C) 🡒 C
 | mdp {A B}      : ProofN Λ (A 🡒 B) → ProofN Λ A → ProofN Λ B
 | nec {A}        : ProofN Λ A → ProofN Λ (□A)
 infix:25 " ⊢ᴺ! " => ProofN
@@ -43,6 +44,7 @@ noncomputable def ofSubsetAxm (hsub : Λ₁ ⊆ Λ₂) : Λ₁ ⊢ᴺ! A → Λ�
   | andElimL => exact andElimL
   | andElimR => exact andElimR
   | andIntro => exact andIntro
+  | orElim => exact orElim
   | mdp _ _ ihAB ihA => exact mdp ihAB ihA
   | nec _ ihA => exact nec ihA
 
@@ -69,14 +71,23 @@ variable {Λ : Axioms α} {A B C : Formula α}
 @[simp, grind .] lemma andElimR : Λ ⊢ᴺ (A ⋏ B) 🡒 B := ⟨ProofN.andElimR⟩
 @[simp, grind .] lemma andIntro : Λ ⊢ᴺ A 🡒 B 🡒 (A ⋏ B) := ⟨ProofN.andIntro⟩
 @[simp, grind .] lemma impId : Λ ⊢ᴺ A 🡒 A := ⟨ProofN.impId⟩
+@[simp, grind .] lemma orElim : Λ ⊢ᴺ A ⋎ B 🡒 (A 🡒 C) 🡒 (B 🡒 C) 🡒 C := ⟨ProofN.orElim⟩
+
 @[grind =>] lemma mdp : Λ ⊢ᴺ A 🡒 B → Λ ⊢ᴺ A → Λ ⊢ᴺ B := λ ⟨h₁⟩ ⟨h₂⟩ => ⟨ProofN.mdp h₁ h₂⟩
+@[grind =>] lemma mdp₂ (hABC : Λ ⊢ᴺ A 🡒 B 🡒 C) (hA : Λ ⊢ᴺ A) (hB : Λ ⊢ᴺ B) : Λ ⊢ᴺ C := mdp (mdp hABC hA) hB
+@[grind =>] lemma mdp₃ (hABCD : Λ ⊢ᴺ A 🡒 B 🡒 C 🡒 D) (hA : Λ ⊢ᴺ A) (hB : Λ ⊢ᴺ B) (hC : Λ ⊢ᴺ C) : Λ ⊢ᴺ D := mdp (mdp₂ hABCD hA hB) hC
+
 @[grind <=] lemma af : Λ ⊢ᴺ A → Λ ⊢ᴺ B 🡒 A := λ ⟨h⟩ => ⟨ProofN.af h⟩
 @[grind <=] lemma nec : Λ ⊢ᴺ A → Λ ⊢ᴺ □A := λ ⟨h⟩ => ⟨ProofN.nec h⟩
 @[grind .] lemma lem : Λ ⊢ᴺ A ⋎ ∼A := by simp;
 
 lemma andElimLRule (hAB : Λ ⊢ᴺ A ⋏ B) : Λ ⊢ᴺ A := mdp andElimL hAB
 lemma andElimRRule (hAB : Λ ⊢ᴺ A ⋏ B) : Λ ⊢ᴺ B := mdp andElimR hAB
-lemma andIntroRule (hA : Λ ⊢ᴺ A) (hB : Λ ⊢ᴺ B) : Λ ⊢ᴺ A ⋏ B := mdp (mdp andIntro hA) hB
+lemma andIntroRule (hA : Λ ⊢ᴺ A) (hB : Λ ⊢ᴺ B) : Λ ⊢ᴺ A ⋏ B := mdp₂ andIntro hA hB
+
+-- lemma orIntroLRule (hA : Λ ⊢ᴺ A) : Λ ⊢ᴺ A ⋎ B := mdp orIntroL hA
+-- lemma orIntroRRule (hB : Λ ⊢ᴺ B) : Λ ⊢ᴺ A ⋎ B := mdp orIntroR hB
+lemma orElimRule (hAB : Λ ⊢ᴺ A ⋎ B) (hAC : Λ ⊢ᴺ A 🡒 C) (hBC : Λ ⊢ᴺ B 🡒 C) : Λ ⊢ᴺ C := mdp₃ orElim hAB hAC hBC
 
 @[simp, grind .] lemma verum : Λ ⊢ᴺ ⊤ := by simp;
 
@@ -92,9 +103,24 @@ lemma consistent_of_unprovable (h : Λ ⊬ᴺ A) : Λ ⊬ᴺ ⊥ := by
 
 @[grind =>] lemma dneRule (hA : Λ ⊢ᴺ ∼∼A) : Λ ⊢ᴺ A := mdp dne hA
 
-lemma impTransRule (hAB : Λ ⊢ᴺ A 🡒 B) (hBC : Λ ⊢ᴺ B 🡒 C) : Λ ⊢ᴺ A 🡒 C := by
+lemma ctx_mdp {B} (hCAB : Λ ⊢ᴺ C 🡒 A 🡒 B) (hCA : Λ ⊢ᴺ C 🡒 A) : Λ ⊢ᴺ C 🡒 B := mdp₂ implyS hCAB hCA
+lemma ctx_mdp₂ (hABCD : Λ ⊢ᴺ A 🡒 B 🡒 C 🡒 D) (hABC : Λ ⊢ᴺ A 🡒 B 🡒 C) : Λ ⊢ᴺ A 🡒 B 🡒 D := ctx_mdp (ctx_mdp (af implyS) hABCD) hABC
 
-  sorry;
+lemma impTransRule (hAB : Λ ⊢ᴺ A 🡒 B) (hBC : Λ ⊢ᴺ B 🡒 C) : Λ ⊢ᴺ A 🡒 C := by
+  have : Λ ⊢ᴺ (A 🡒 B 🡒 C) 🡒 (A 🡒 B) 🡒 (A 🡒 C) := implyS;
+  have : Λ ⊢ᴺ (A 🡒 B) 🡒 (A 🡒 C) := mdp implyS $ mdp₂ implyS (af $ af $ hBC) hAB;
+  exact mdp this hAB;
+
+lemma imp₃Swap (hABC : Λ ⊢ᴺ A 🡒 B 🡒 C) : Λ ⊢ᴺ B 🡒 A 🡒 C := by
+  apply ctx_mdp₂;
+  . apply af hABC;
+  . apply implyK;
+
+lemma impTrans' : Λ ⊢ᴺ (B 🡒 C) 🡒 (A 🡒 B) 🡒 (A 🡒 C) := impTransRule (imp₃Swap (af impId)) implyS
+
+lemma impTrans : Λ ⊢ᴺ (A 🡒 B) 🡒 (B 🡒 C) 🡒 (A 🡒 C) := by
+  apply imp₃Swap impTrans';
+
 
 lemma lconjElim {X : List _} (hA : A ∈ X) : Λ ⊢ᴺ ⋀X 🡒 A := by
   match X with
@@ -128,12 +154,15 @@ lemma lconjIntro {X : List _} (hA : ∀ A ∈ X, Λ ⊢ᴺ A) : Λ ⊢ᴺ ⋀X :
       grind;
 lemma fconjIntro {X : Finset _} (hA : ∀ A ∈ X, Λ ⊢ᴺ A) : Λ ⊢ᴺ ⋀X := lconjIntro (X := X.toList) (by simpa)
 
-lemma ctx_mdp {B} (hCAB : Λ ⊢ᴺ C 🡒 A 🡒 B) (hCA : Λ ⊢ᴺ C 🡒 A) : Λ ⊢ᴺ C 🡒 B := mdp (mdp implyS hCAB) hCA
-
 lemma ctx_af {B} (hCA : Λ ⊢ᴺ C 🡒 A) : Λ ⊢ᴺ C 🡒 B 🡒 A := impTransRule hCA implyK
+
+lemma ctx_impTransRule (hAB : Λ ⊢ᴺ C 🡒 A 🡒 B) (hBC : Λ ⊢ᴺ C 🡒 B 🡒 D) : Λ ⊢ᴺ C 🡒 A 🡒 D := ctx_mdp (impTransRule hAB $ impTrans) hBC
 
 lemma ctxAndIntroRule (hA : Λ ⊢ᴺ C 🡒 A) (hB : Λ ⊢ᴺ C 🡒 B) : Λ ⊢ᴺ C 🡒 (A ⋏ B) := by
   exact ctx_mdp (impTransRule hA $ andIntro) hB;
+
+lemma ctxOrElimRule (hAB : Λ ⊢ᴺ C 🡒 A ⋎ B) (hAC : Λ ⊢ᴺ C 🡒 A 🡒 D) (hBC : Λ ⊢ᴺ C 🡒 B 🡒 D) : Λ ⊢ᴺ C 🡒 D :=
+  ctx_mdp (ctx_mdp (impTransRule hAB orElim) hAC) hBC
 
 lemma ctxLconjIntroRule {X : List _} (hA : ∀ A ∈ X, Λ ⊢ᴺ C 🡒 A) : Λ ⊢ᴺ C 🡒 ⋀X := by
   match X with
@@ -155,12 +184,12 @@ lemma lconj_subset {X Y : List _} (hsub : X ⊆ Y) : Λ ⊢ᴺ ⋀Y 🡒 ⋀X :=
 lemma sconj_subset {X Y : Finset _} (hsub : X ⊆ Y) : Λ ⊢ᴺ ⋀Y 🡒 ⋀X := lconj_subset (X := X.toList) (Y := Y.toList) $ by
   grind [Finset.mem_toList];
 
-lemma uncurry {A B} (h : Λ ⊢ᴺ A 🡒 B 🡒 C) : Λ ⊢ᴺ (A ⋏ B) 🡒 C := by
-  sorry;
+lemma uncurry {A B C} (h : Λ ⊢ᴺ A 🡒 B 🡒 C) : Λ ⊢ᴺ (A ⋏ B) 🡒 C := ctx_mdp (impTransRule andElimL h) andElimR
 
-lemma curry {A B} (h : Λ ⊢ᴺ (A ⋏ B) 🡒 C) : Λ ⊢ᴺ A 🡒 B 🡒 C := by
-
-  sorry;
+lemma curry {A B C} (h : Λ ⊢ᴺ (A ⋏ B) 🡒 C) : Λ ⊢ᴺ A 🡒 B 🡒 C := by
+  have h₁ : Λ ⊢ᴺ A 🡒 B 🡒 (A ⋏ B) := andIntro;
+  have h₂ : Λ ⊢ᴺ A 🡒 (A ⋏ B 🡒 C) := af h;
+  exact ctx_impTransRule h₁ h₂;
 
 @[induction_eliminator]
 protected lemma rec
@@ -175,6 +204,7 @@ protected lemma rec
   (andElimL : ∀ {A B}, (motive ((A ⋏ B) 🡒 A) andElimL))
   (andElimR : ∀ {A B}, (motive ((A ⋏ B) 🡒 B) andElimR))
   (andIntro : ∀ {A B}, (motive (A 🡒 B 🡒 (A ⋏ B)) andIntro))
+  (orElim   : ∀ {A B C}, (motive (A ⋎ B 🡒 (A 🡒 C) 🡒 (B 🡒 C) 🡒 C) orElim))
   : ∀ {A}, (d : Λ ⊢ᴺ A) → motive A d := by rintro A ⟨d⟩; induction d <;> grind;
 
 end ProvableN
@@ -186,12 +216,10 @@ notation:25 X " ⊢ᴺ[" Λ "] " A => FinitelyDerivableN Λ X A
 
 namespace FinitelyDerivableN
 
-variable [DecidableEq α]
 variable {Λ : Axioms α} {X : Finset (Formula α)} {A B C : Formula α}
 
 open ProvableN
 
-omit [DecidableEq α] in
 lemma iff_empty_derivable : (Λ ⊢ᴺ A) ↔ (∅ ⊢ᴺ[Λ] A)  := by
   unfold FinitelyDerivableN;
   constructor;
@@ -200,7 +228,7 @@ lemma iff_empty_derivable : (Λ ⊢ᴺ A) ↔ (∅ ⊢ᴺ[Λ] A)  := by
   . intro h;
     exact mdp h (by simp);
 
-lemma to_ctx : (X ⊢ᴺ[Λ] A 🡒 B) → ((insert A X) ⊢ᴺ[Λ] B) := by
+lemma to_ctx [DecidableEq α] : (X ⊢ᴺ[Λ] A 🡒 B) → ((insert A X) ⊢ᴺ[Λ] B) := by
   unfold FinitelyDerivableN;
   intro h;
   apply impTransRule;
@@ -212,7 +240,7 @@ lemma to_ctx : (X ⊢ᴺ[Λ] A 🡒 B) → ((insert A X) ⊢ᴺ[Λ] B) := by
       grind;
   . exact uncurry h;
 
-lemma from_ctx : ((insert A X) ⊢ᴺ[Λ] B) → (X ⊢ᴺ[Λ] A 🡒 B) := by
+lemma from_ctx [DecidableEq α] : ((insert A X) ⊢ᴺ[Λ] B) → (X ⊢ᴺ[Λ] A 🡒 B) := by
   unfold FinitelyDerivableN;
   intro h;
   apply curry;
@@ -228,28 +256,23 @@ lemma from_ctx : ((insert A X) ⊢ᴺ[Λ] B) → (X ⊢ᴺ[Λ] A 🡒 B) := by
       . exact fconjElim hC;
   . exact h;
 
-omit [DecidableEq α] in
 lemma of_mem_ctx (hA : A ∈ X) : X ⊢ᴺ[Λ] A := by
   unfold FinitelyDerivableN;
   apply ProvableN.fconjElim hA;
 
-omit [DecidableEq α] in
 lemma mdp (hAB : X ⊢ᴺ[Λ] A 🡒 B) (hA : X ⊢ᴺ[Λ] A) : X ⊢ᴺ[Λ] B := by
   unfold FinitelyDerivableN at hAB hA ⊢;
   exact ProvableN.ctx_mdp hAB hA;
 
-omit [DecidableEq α] in
 lemma weakening (hsub : X ⊆ Y) (hX : X ⊢ᴺ[Λ] A) : Y ⊢ᴺ[Λ] A := by
   unfold FinitelyDerivableN at hX ⊢;
   apply ProvableN.impTransRule ?_ hX;
   apply ProvableN.sconj_subset hsub;
 
-omit [DecidableEq α] in
 lemma of_provable (hA : Λ ⊢ᴺ A) : X ⊢ᴺ[Λ] A := by
   exact weakening (show ∅ ⊆ X by simp) $ iff_empty_derivable.mp hA;
 
-lemma orElim (hAB : X ⊢ᴺ[Λ] A ⋎ B) (hA : X ⊢ᴺ[Λ] A 🡒 C) (hB : X ⊢ᴺ[Λ] B 🡒 C) : X ⊢ᴺ[Λ] C := by
-  sorry;
+lemma orElim (hAB : X ⊢ᴺ[Λ] A ⋎ B) (hAC : X ⊢ᴺ[Λ] A 🡒 C) (hBC : X ⊢ᴺ[Λ] B 🡒 C) : X ⊢ᴺ[Λ] C := ctxOrElimRule hAB hAC hBC
 
 lemma lem_elim (hA : X ⊢ᴺ[Λ] A 🡒 B) (hNA : X ⊢ᴺ[Λ] ∼A 🡒 B) : X ⊢ᴺ[Λ] B := by
   apply orElim (of_provable lem) hA hNA;

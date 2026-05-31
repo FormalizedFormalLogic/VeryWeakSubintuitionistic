@@ -69,7 +69,7 @@ end ProvableN
 
 namespace FinitelyDerivableN
 
-variable [DecidableEq α] {Λ : Axioms α} {X : Finset (Formula α)} {A B C : Formula α}
+variable {Λ : Axioms α} {X : Finset (Formula α)} {A B C : Formula α}
 
 lemma complement_lem_elim (hA : X ⊢ᴺ[Λ] A 🡒 C) (hB : X ⊢ᴺ[Λ] A.complement 🡒 C) : X ⊢ᴺ[Λ] C := by
   match A with
