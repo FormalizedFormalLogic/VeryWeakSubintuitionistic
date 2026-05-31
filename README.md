@@ -2,9 +2,7 @@
 
 Formalization of very weak subintuitionstic logics in Lean 4.
 
-Status: **WIP**:
-This formalization is migrated from old codes from [Foundation](https://github.com/FormalizedFormalLogic).
-Currently we are rewriting proofs for more generalized results on latest articles.
+This formalization is migrated from old codes in [Foundation](https://github.com/FormalizedFormalLogic).
 
 ## Related Articles
 
