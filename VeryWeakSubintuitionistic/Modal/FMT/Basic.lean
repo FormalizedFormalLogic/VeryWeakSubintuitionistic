@@ -49,9 +49,10 @@ infix:45 " ⊮ " => NotForced
 lemma forces_and : x ⊩ A ⋏ B ↔ (x ⊩ A ∧ x ⊩ B) := by grind;
 lemma forces_or : x ⊩ A ⋎ B ↔ (x ⊩ A ∨ x ⊩ B) := by grind;
 lemma forces_top : x ⊩ ⊤ := by grind;
+lemma forces_not : x ⊩ ∼A ↔ (x ⊮ A) := by grind;
 
 attribute [simp, grind .] forces_top
-attribute [grind =] forces_and forces_or
+attribute [grind =] forces_and forces_or forces_not
 
 lemma notForces_box : (x ⊮ □A) ↔ (∃ y, x ≺[□A] y ∧ y ⊮ A) := by grind;
 

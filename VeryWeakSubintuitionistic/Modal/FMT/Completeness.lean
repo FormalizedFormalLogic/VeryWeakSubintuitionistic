@@ -404,6 +404,16 @@ theorem finite_model_property : (∀ {κ : Type u}, [Finite κ] → ∀ M : Mode
     apply lindenbaum_subset;
     simp;
 
+theorem result_model : List.TFAE [
+  Λ ⊢ᴺ A,
+  ∀ {κ : Type u}, ∀ M : Model κ α, (∀ B ∈ Λ, M ⊨ B) → M ⊨ A,
+  ∀ {κ : Type u}, [Finite κ] → ∀ M : Model κ α, (∀ B ∈ Λ, M ⊨ B) → M ⊨ A
+] := by
+  tfae_have 1 → 2 := by intro h _; apply soundness_model h;
+  tfae_have 2 → 3 := by grind;
+  tfae_have 3 → 1 := finite_model_property
+  tfae_finish;
+
 end FMT
 
 

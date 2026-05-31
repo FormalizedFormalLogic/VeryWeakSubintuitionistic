@@ -1,5 +1,11 @@
 module  -- shake: keep-all
 
+public import VeryWeakSubintuitionistic.Modal.FMT.Basic
+public import VeryWeakSubintuitionistic.Modal.FMT.Completeness
+public import VeryWeakSubintuitionistic.Modal.Proof.Basic
+public import VeryWeakSubintuitionistic.Modal.Proof.N
+public import VeryWeakSubintuitionistic.Modal.Syntax
+public import VeryWeakSubintuitionistic.ModalCompanion.Basic
 public import VeryWeakSubintuitionistic.Propositional.FMT.Basic
 public import VeryWeakSubintuitionistic.Propositional.FMT.Completeness
 public import VeryWeakSubintuitionistic.Propositional.Kripke.Basic

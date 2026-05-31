@@ -6,3 +6,6 @@
 
 # paper
 paper
+
+# Claude
+.claude/settings.json

@@ -31,9 +31,11 @@ prefix:90 "∼" => neg
 abbrev top : Formula α := ∼⊥
 notation:91 "⊤" => top
 
+@[match_pattern]
 abbrev or (A B : Formula α) : Formula α := ∼A 🡒 B
 infixl:86 " ⋎ " => or
 
+@[match_pattern]
 abbrev and (A B : Formula α) : Formula α := ∼(A 🡒 ∼B)
 infixl:87 " ⋏ " => and
 
