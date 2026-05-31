@@ -213,7 +213,7 @@ section
 variable {Λ : Axioms α} {A : Formula α}
 
 lemma provableN_star_of_provableVF
-  [Fact (∀ B ∈ Λ, B.IsClosedNegativeAxiom)] [Fact ((Λ.star) ⊬ᴺ ⊥)]
+  [Fact (∀ B ∈ Λ, B.IsClosedNegativeAxiom)]
   : (Λ ⊢ⱽ A) → (Λ.star ⊢ᴺ A.corsi) := by
   have hCNA : ∀ B ∈ Λ, B.IsClosedNegativeAxiom := Fact.out;
   intro h;
@@ -237,7 +237,6 @@ lemma provableN_star_repeatNeg_of_provableN_star {N : Finset ℕ} : Λ.star ⊢�
 lemma provableVF_of_provableN_star_repeatNeg
   {N : Finset ℕ}
   [Fact (∀ B ∈ Λ, B.IsClosedNegativeAxiom)]
-  [Fact (Λ.star ∪ Finset.image (λ n ↦ ∼□∼^[2 * n]⊥) N ⊬ᴺ ⊥)]
   : (Λ.star ∪ N.image (λ n => ∼□(∼^[2 * n]⊥))) ⊢ᴺ A.corsi → Λ ⊢ⱽ A := by
   have hCNA : ∀ B ∈ Λ, B.IsClosedNegativeAxiom := Fact.out;
   contrapose;

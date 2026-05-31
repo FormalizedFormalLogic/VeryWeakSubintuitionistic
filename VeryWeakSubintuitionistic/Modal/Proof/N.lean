@@ -82,6 +82,14 @@ lemma andIntroRule (hA : Λ ⊢ᴺ A) (hB : Λ ⊢ᴺ B) : Λ ⊢ᴺ A ⋏ B := 
 
 lemma ofSubsetAxm (h : Λ₁ ⊆ Λ₂) : Λ₁ ⊢ᴺ A → Λ₂ ⊢ᴺ A := λ ⟨h₁⟩ => ⟨ProofN.ofSubsetAxm h h₁⟩
 
+@[grind <=] lemma efqRule (hA : Λ ⊢ᴺ ⊥) : Λ ⊢ᴺ A := mdp efq hA
+
+@[grind =>]
+lemma consistent_of_unprovable (h : Λ ⊬ᴺ A) : Λ ⊬ᴺ ⊥ := by
+  contrapose! h;
+  apply efqRule h;
+
+
 @[grind =>] lemma dneRule (hA : Λ ⊢ᴺ ∼∼A) : Λ ⊢ᴺ A := mdp dne hA
 
 lemma impTransRule (hAB : Λ ⊢ᴺ A 🡒 B) (hBC : Λ ⊢ᴺ B 🡒 C) : Λ ⊢ᴺ A 🡒 C := by

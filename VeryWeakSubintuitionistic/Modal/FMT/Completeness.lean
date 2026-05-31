@@ -338,8 +338,7 @@ noncomputable def countermodel (Λ : Axioms α) (A : Formula α) [Fact (Λ ⊬�
       exact ProvableN.dneRule $ this;
     apply Fact.elim inferInstance;
 
-variable [Fact (Λ ⊬ᴺ ⊥)]
-
+variable [Fact (Λ ⊬ᴺ ⊥)] in
 lemma countermodel.truthlemma {S : (countermodel Λ A).World} (B : ScopeOf Λ A) : B ∈ S.1.1 ↔ S ⊩ B := by
   obtain ⟨B, hB⟩ := B;
   induction B generalizing S with
@@ -380,6 +379,7 @@ lemma countermodel.truthlemma {S : (countermodel Λ A).World} (B : ScopeOf Λ A)
         apply MaximalConsistentScopeSet.lindenbaum_subset;
         simp;
 
+variable [Fact (Λ ⊬ᴺ ⊥)] in
 lemma countermodel.valid_axioms : ∀ B ∈ Λ, (countermodel Λ A) ⊨ B := by
   intro B hB X;
   apply countermodel.truthlemma (B := ⟨B, by grind⟩) |>.mp;
@@ -390,6 +390,7 @@ open MaximalConsistentScopeSet in
 theorem finite_model_property : (∀ {κ : Type u}, [Finite κ] → ∀ M : Model κ α, (∀ B ∈ Λ, M ⊨ B) → M ⊨ A) → Λ ⊢ᴺ A := by
   contrapose;
   intro h;
+  have : Fact (Λ ⊬ᴺ ⊥) := ⟨ProvableN.consistent_of_unprovable h⟩
   push Not;
   use (MaximalConsistentScopeSet Λ A), inferInstance, countermodel Λ A;
   constructor;
