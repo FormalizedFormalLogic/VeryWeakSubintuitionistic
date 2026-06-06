@@ -164,8 +164,13 @@ def negRepeat : ℕ → Formula α → Formula α
 
 notation "∼^[" n "]" A => negRepeat n A
 
-lemma negRepeat_succ_rw {n : ℕ} : (∼^[2 * (n + 1)]A) = ∼(∼^[2 * n](∼A)) := by
+lemma negRepeat_neg {n : ℕ} : (∼^[n](∼A)) = ∼(∼^[n]A) := by
   induction n <;> simp_all [negRepeat];
+
+lemma negRepeat_succ_rw {n : ℕ} : (∼^[2 * (n + 1)]A) = ∼(∼^[2 * n](∼A)) := by
+  rw [negRepeat_neg];
+  rw [show 2 * (n + 1) = 2 * n + 1 + 1 by omega];
+  simp [negRepeat];
 
 end Modal.Formula
 
@@ -202,6 +207,7 @@ lemma notForces_double_negRepeat {M : Model κ α} {x : M.World} : (x ⊩ (∼^[
   | zero => grind;
   | succ n ih =>
     apply Iff.trans ?_ ih;
+    rw [show 2 * (n + 1) = 2 * n + 1 + 1 by omega];
     simp [Modal.Formula.negRepeat];
     grind;
 
@@ -296,6 +302,11 @@ theorem modal_companion_VF {A : Formula α} {N : Finset ℕ} : List.TFAE [
   have : Fact (∀ B ∈ (∅ : Axioms α), B.IsClosedNegativeAxiom) := ⟨by grind⟩;
   simpa [Axioms.star] using modal_companion (Λ := ∅);
 
+omit [DecidableEq α] in
+private lemma star_singleton_dni : ({ (∼∼⊤ : Formula α) } : Axioms α).star = { (∼□∼□⊤ : Modal.Formula α) } := by
+  ext B;
+  simp [Axioms.star, Formula.corsi, eq_comm];
+
 /-- Corollary 6.13 -/
 theorem modal_companion_VFSer {A : Formula α} {N : Finset ℕ} : List.TFAE [
   ({(∼∼⊤ : Formula α)}) ⊢ⱽ A,
@@ -303,7 +314,7 @@ theorem modal_companion_VFSer {A : Formula α} {N : Finset ℕ} : List.TFAE [
   (insert (∼□∼□⊤ : Modal.Formula α) (N.image (λ n => ∼□(∼^[2 * n]⊥)))) ⊢ᴺ A.corsi
 ] := by
   have : Fact (∀ B ∈ ({ (∼∼⊤ : Formula α) } : Axioms α), B.IsClosedNegativeAxiom) := ⟨by grind⟩;
-  simpa [Axioms.star] using modal_companion (Λ := { (∼∼⊤ : Formula α) });
+  simpa [star_singleton_dni, Finset.singleton_union] using modal_companion (Λ := { (∼∼⊤ : Formula α) });
 
 
 end
