@@ -14,7 +14,7 @@ This formalization is migrated from old codes in [Foundation](https://github.com
 
 ## License
 
-[![CC-BY-SA 4.0](https://mirrors.creativecommons.org/presskit/buttons/88x31/svg/by-sa.svg)](./LICENSE)
+[![License: Apache 2.0](https://img.shields.io/github/license/FormalizedFormalLogic/VeryWeakSubintuitionistic)](./LICENSE)
 
-This project licensed under CC-BY-SA 4.0.
+This project is licensed under the Apache License 2.0.
 See [LICENSE](./LICENSE).
