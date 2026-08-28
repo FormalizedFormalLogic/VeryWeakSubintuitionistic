@@ -12,19 +12,19 @@ section Soundness
 variable {κ α : Type*} {F : Frame κ α} {M : Model κ α} {𝔸 : Axioms α} {A B C : Formula α}
 
 class Frame.Rosser (F : Frame κ α) : Prop where
-  ros : ∀ (x : F.World) (A B : Formula α), ∃ z : F.World, x ≺[B 🡒 A] z
+  ros : ∀ (x : F.World) (A B : Formula α), ∃ y : F.World, x ≺[A 🡒 B] y
 
 @[grind <=]
 lemma frameValid_ros [F.Rosser] (hA : F ⊨ ∼A) (hB : F ⊨ B) : F ⊨ ∼(B 🡒 A) := by
   intro V x y Rxy hBA;
-  obtain ⟨z, Ryz⟩ := Frame.Rosser.ros y A B;
+  obtain ⟨z, Ryz⟩ := Frame.Rosser.ros y B A;
   apply hA V F.root z (by grind);
   exact hBA z Ryz (hB V z);
 
 @[grind <=]
 lemma modelValid_ros [M.toFrame.Rosser] (hA : M ⊨ ∼A) (hB : M ⊨ B) : M ⊨ ∼(B 🡒 A) := by
   intro x y Rxy hBA;
-  obtain ⟨z, Ryz⟩ := Frame.Rosser.ros (F := M.toFrame) y A B;
+  obtain ⟨z, Ryz⟩ := Frame.Rosser.ros (F := M.toFrame) y B A;
   apply hA M.root z (by grind);
   exact hBA z Ryz (hB z);
 
@@ -323,7 +323,7 @@ lemma countermodelRos.valid_axioms : ∀ B ∈ 𝔸, (countermodelRos 𝔸 A) �
   exact countermodelRos.truthlemma _ |>.mp $ T.mem_ant_of_provable (B := ⟨B, mem_scope_of_mem_axioms hB⟩) (axm hB);
 
 lemma countermodelRos.exists_succ {T : (countermodelRos 𝔸 A).World} {C D : Formula α}
-  : ∃ z : (countermodelRos 𝔸 A).World, T ≺[C 🡒 D] z := by
+  : ∃ y : (countermodelRos 𝔸 A).World, T ≺[C 🡒 D] y := by
   by_cases hCD : (C 🡒 D) ∈ scope 𝔸 A;
   . obtain ⟨hCs, hDs⟩ := mem_scope_of_mem_imp_scope hCD;
     by_cases hTcon : (⟨C 🡒 D, hCD⟩ : ScopeOf 𝔸 A) ∈ T.con;
