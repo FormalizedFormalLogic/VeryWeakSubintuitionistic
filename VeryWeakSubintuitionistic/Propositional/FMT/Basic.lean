@@ -120,8 +120,8 @@ lemma frameValid_mdp (hAB : F ⊨ A 🡒 B) (hA : F ⊨ A) : F ⊨ B := by
 @[grind <=]
 lemma frameValid_af (hA : F ⊨ A) : F ⊨ B 🡒 A := by grind;
 
-theorem soundness_frame : (Λ ⊢ⱽ A) → (∀ {κ}, ∀ F : Frame κ α, (∀ B ∈ Λ, F ⊨ B) → F ⊨ A) := by
-  intro h _ F hΛ; induction h <;> grind;
+theorem soundness_frame : (⊢ʰ[VF;𝔸] A) → (∀ {κ}, ∀ F : Frame κ α, (∀ B ∈ 𝔸, F ⊨ B) → F ⊨ A) := by
+  intro h _ F h𝔸; induction h <;> grind;
 
 
 
@@ -151,13 +151,13 @@ lemma modelValid_mdp (hAB : M ⊨ A 🡒 B) (hA : M ⊨ A) : M ⊨ B := by
 @[grind <=]
 lemma modelValid_af (hA : M ⊨ A) : M ⊨ B 🡒 A := by grind;
 
-theorem soundness_model : (Λ ⊢ⱽ A) → (∀ {κ}, ∀ M : Model κ α, (∀ B ∈ Λ, M ⊨ B) → M ⊨ A) := by
+theorem soundness_model : (⊢ʰ[VF;𝔸] A) → (∀ {κ}, ∀ M : Model κ α, (∀ B ∈ 𝔸, M ⊨ B) → M ⊨ A) := by
   intro h _ M hM; induction h <;> grind;
 
 
 
 @[simp, grind .]
-theorem consistency_of_VF : (∅ ⊬ (⊥ : Formula α)) := by
+theorem consistency_of_VF : (⊬ʰ[VF;∅] (⊥ : Formula α)) := by
   by_contra!;
   let F : Frame (Fin 1) α := {
     Rel' := λ _ _ _ => True,
@@ -166,7 +166,7 @@ theorem consistency_of_VF : (∅ ⊬ (⊥ : Formula α)) := by
   };
   simpa using soundness_frame this F (by grind);
 
-example : (∅ ⊬ (⊤ 🡒 (#0 ⋏ #1) 🡘 (⊤ 🡒 (#1 ⋏ #0)))) := by
+example : (⊬ʰ[VF;∅] (⊤ 🡒 (#0 ⋏ #1) 🡘 (⊤ 🡒 (#1 ⋏ #0)))) := by
   by_contra!;
   let M : Model (Fin 3) ℕ := {
     Rel' := λ A x y =>

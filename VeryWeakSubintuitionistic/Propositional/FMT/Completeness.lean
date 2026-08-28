@@ -26,64 +26,64 @@ end Formula
 
 
 variable {α : Type u} [DecidableEq α]
-variable {Λ : Axioms α} {A : Formula α}
+variable {𝔸 : Axioms α} {A : Formula α}
 
 @[grind]
-def scope (Λ : Axioms α) (A : Formula α) : Finset (Formula α) :=
+def scope (𝔸 : Axioms α) (A : Formula α) : Finset (Formula α) :=
   {⊤, ⊥} ∪
   A.subfmls ∪
-  Λ.biUnion (·.subfmls)
+  𝔸.biUnion (·.subfmls)
 
 section
 
 variable {A B C : Formula α}
 
-@[simp, grind .] lemma mem_scope_self : A ∈ scope Λ A := by grind [scope];
-@[simp, grind .] lemma mem_scope_top : ⊤ ∈ scope Λ A := by grind [scope];
-@[simp, grind .] lemma mem_scope_bot : ⊥ ∈ scope Λ A := by grind [scope];
+@[simp, grind .] lemma mem_scope_self : A ∈ scope 𝔸 A := by grind [scope];
+@[simp, grind .] lemma mem_scope_top : ⊤ ∈ scope 𝔸 A := by grind [scope];
+@[simp, grind .] lemma mem_scope_bot : ⊥ ∈ scope 𝔸 A := by grind [scope];
 
-@[grind =>] lemma mem_scope_of_mem_subfmls (h : B ∈ A.subfmls) : B ∈ scope Λ A := by grind [scope]
-@[grind =>] lemma mem_scope_of_mem_axioms_subfmlss (h : B ∈ Λ.biUnion (·.subfmls)) : B ∈ scope Λ A := by grind [scope]
-@[grind =>] lemma mem_scope_of_mem_axioms (h : B ∈ Λ) : B ∈ scope Λ A := by grind [scope]
+@[grind =>] lemma mem_scope_of_mem_subfmls (h : B ∈ A.subfmls) : B ∈ scope 𝔸 A := by grind [scope]
+@[grind =>] lemma mem_scope_of_mem_axioms_subfmlss (h : B ∈ 𝔸.biUnion (·.subfmls)) : B ∈ scope 𝔸 A := by grind [scope]
+@[grind =>] lemma mem_scope_of_mem_axioms (h : B ∈ 𝔸) : B ∈ scope 𝔸 A := by grind [scope]
 
-@[grind =>] lemma mem_scope_of_mem_and_scope (h : (B ⋏ C) ∈ scope Λ A) : B ∈ scope Λ A ∧ C ∈ scope Λ A := by grind;
-@[grind =>] lemma mem_scope_of_mem_or_scope (h : (B ⋎ C) ∈ scope Λ A) : B ∈ scope Λ A ∧ C ∈ scope Λ A := by grind;
-@[grind =>] lemma mem_scope_of_mem_imp_scope (h : (B 🡒 C) ∈ scope Λ A) : B ∈ scope Λ A ∧ C ∈ scope Λ A := by grind;
+@[grind =>] lemma mem_scope_of_mem_and_scope (h : (B ⋏ C) ∈ scope 𝔸 A) : B ∈ scope 𝔸 A ∧ C ∈ scope 𝔸 A := by grind;
+@[grind =>] lemma mem_scope_of_mem_or_scope (h : (B ⋎ C) ∈ scope 𝔸 A) : B ∈ scope 𝔸 A ∧ C ∈ scope 𝔸 A := by grind;
+@[grind =>] lemma mem_scope_of_mem_imp_scope (h : (B 🡒 C) ∈ scope 𝔸 A) : B ∈ scope 𝔸 A ∧ C ∈ scope 𝔸 A := by grind;
 
 end
 
 
-abbrev ScopeOf (Λ : Axioms α) (A : Formula α) := { B // B ∈ (scope Λ A) }
+abbrev ScopeOf (𝔸 : Axioms α) (A : Formula α) := { B // B ∈ (scope 𝔸 A) }
 
-instance : Fintype (Finset (ScopeOf Λ A)) where
+instance : Fintype (Finset (ScopeOf 𝔸 A)) where
   elems := Finset.univ.powerset;
   complete := by grind;
 
 
-structure Tableau (Λ : Axioms α) (A : Formula α) where
-  ant : (Finset (ScopeOf Λ A))
-  con : (Finset (ScopeOf Λ A))
+structure Tableau (𝔸 : Axioms α) (A : Formula α) where
+  ant : (Finset (ScopeOf 𝔸 A))
+  con : (Finset (ScopeOf 𝔸 A))
 
-instance : Finite (Tableau Λ A) := Finite.of_injective (λ T => (T.ant, T.con)) $ by
+instance : Finite (Tableau 𝔸 A) := Finite.of_injective (λ T => (T.ant, T.con)) $ by
   rintro ⟨_, _⟩ ⟨_, _⟩;
   simp;
 
 
 namespace Tableau
 
-variable {T : Tableau Λ A}
+variable {T : Tableau 𝔸 A}
 
-def Inconsistent (T : Tableau Λ A) : Prop := Λ ⊢ⱽ ⋀(T.ant.image (·.1)) 🡒 ⋁(T.con.image (·.1))
-abbrev Consistent (T : Tableau Λ A) : Prop := ¬(T.Inconsistent)
+def Inconsistent (T : Tableau 𝔸 A) : Prop := ⊢ʰ[VF;𝔸] ⋀(T.ant.image (·.1)) 🡒 ⋁(T.con.image (·.1))
+abbrev Consistent (T : Tableau 𝔸 A) : Prop := ¬(T.Inconsistent)
 
-lemma iff_inconsistent : T.Inconsistent ↔ Λ ⊢ⱽ ⋀ (T.ant.image (·.1)) 🡒 ⋁ (T.con.image (·.1)) := by tauto;
+lemma iff_inconsistent : T.Inconsistent ↔ ⊢ʰ[VF;𝔸] ⋀ (T.ant.image (·.1)) 🡒 ⋁ (T.con.image (·.1)) := by tauto;
 
-def insertAnt (T : Tableau Λ A) (B : ScopeOf Λ A) : Tableau Λ A := { T with ant := insert B T.ant }
-def insertCon (T : Tableau Λ A) (B : ScopeOf Λ A) : Tableau Λ A := { T with con := insert B T.con }
+def insertAnt (T : Tableau 𝔸 A) (B : ScopeOf 𝔸 A) : Tableau 𝔸 A := { T with ant := insert B T.ant }
+def insertCon (T : Tableau 𝔸 A) (B : ScopeOf 𝔸 A) : Tableau 𝔸 A := { T with con := insert B T.con }
 
-open ProvableVF in
+open VF.ProvableHilbert in
 lemma either_consistent_insert
-  (T : Tableau Λ A) (B : ScopeOf Λ A) (T_consis : T.Consistent)
+  (T : Tableau 𝔸 A) (B : ScopeOf 𝔸 A) (T_consis : T.Consistent)
   : Tableau.Consistent (Tableau.insertAnt T B) ∨ Tableau.Consistent (Tableau.insertCon T B) := by
   by_contra! hC;
   rcases hC with ⟨hB₁, hB₂⟩;
@@ -105,34 +105,34 @@ lemma either_consistent_insert
       simpa using sconj_insert;
   . exact ruleD impId hB₁;
 
-def Saturated (T : Tableau Λ A) := T.ant ∪ T.con = Finset.univ
+def Saturated (T : Tableau 𝔸 A) := T.ant ∪ T.con = Finset.univ
 
 @[grind =>]
-lemma mem_ant_of_not_mem_con_of_saturated {T : Tableau Λ A} (hT : T.Saturated) {B : ScopeOf Λ A} : B ∉ T.con → B ∈ T.ant := by
+lemma mem_ant_of_not_mem_con_of_saturated {T : Tableau 𝔸 A} (hT : T.Saturated) {B : ScopeOf 𝔸 A} : B ∉ T.con → B ∈ T.ant := by
   have := hT ▸ Finset.mem_univ B;
   grind only [= Finset.mem_union];
 
 @[grind =>]
-lemma mem_con_of_not_mem_ant_of_saturated {T : Tableau Λ A} (hT : T.Saturated) {B : ScopeOf Λ A} : B ∉ T.ant → B ∈ T.con := by
+lemma mem_con_of_not_mem_ant_of_saturated {T : Tableau 𝔸 A} (hT : T.Saturated) {B : ScopeOf 𝔸 A} : B ∉ T.ant → B ∈ T.con := by
   have := hT ▸ Finset.mem_univ B;
   grind only [= Finset.mem_union];
 
 end Tableau
 
 
-structure SaturatedConsistentTableau (Λ : Axioms α) (A : Formula α) extends Tableau Λ A where
+structure SaturatedConsistentTableau (𝔸 : Axioms α) (A : Formula α) extends Tableau 𝔸 A where
   consistent : toTableau.Consistent
   saturated : toTableau.Saturated
 
 namespace SaturatedConsistentTableau
 
-open ProvableVF
+open VF.ProvableHilbert
 
-instance : Finite (SaturatedConsistentTableau Λ A) := Finite.of_injective (·.toTableau) $ by
+instance : Finite (SaturatedConsistentTableau 𝔸 A) := Finite.of_injective (·.toTableau) $ by
   rintro ⟨⟨_, _⟩⟩ ⟨⟨_, _⟩⟩;
   simp;
 
-variable {T : SaturatedConsistentTableau Λ A}
+variable {T : SaturatedConsistentTableau 𝔸 A}
 
 @[grind =]
 lemma iff_mem_ant_not_mem_con : B ∈ T.ant ↔ B ∉ T.con := by
@@ -150,7 +150,7 @@ lemma iff_mem_con_not_mem_ant : B ∈ T.con ↔ B ∉ T.ant := by
     exact iff_mem_ant_not_mem_con.mp;
   . apply T.toTableau.mem_con_of_not_mem_ant_of_saturated T.saturated;
 
-lemma imp_closed : Λ ⊢ⱽ (B.1 🡒 C.1) → B ∈ T.ant → C ∈ T.ant := by
+lemma imp_closed : ⊢ʰ[VF;𝔸] (B.1 🡒 C.1) → B ∈ T.ant → C ∈ T.ant := by
   rintro hBC hB;
   by_contra! hC;
   apply T.consistent;
@@ -160,7 +160,7 @@ lemma imp_closed : Λ ⊢ⱽ (B.1 🡒 C.1) → B ∈ T.ant → C ∈ T.ant := b
 lemma mem_ant_top : ⟨⊤, by grind⟩ ∈ T.ant := by
   have := T.consistent;
   contrapose! this;
-  exact ruleI (af (show Λ ⊢ⱽ ⊤ by simp)) $ sdisj_of_mem (by grind);
+  exact ruleI (af (show ⊢ʰ[VF;𝔸] ⊤ by simp)) $ sdisj_of_mem (by grind);
 
 @[simp, grind .]
 lemma mem_con_bot : ⟨⊥, by grind⟩ ∈ T.con := by
@@ -169,7 +169,7 @@ lemma mem_con_bot : ⟨⊥, by grind⟩ ∈ T.con := by
   exact ruleI (sconj_of_mem (by grind)) efq;
 
 @[grind =>]
-lemma iff_mem_ant_and (hBC : (B ⋏ C) ∈ scope Λ A) : (⟨B ⋏ C, hBC⟩ ∈ T.ant) ↔ (⟨B, by grind⟩ ∈ T.ant ∧ ⟨C, by grind⟩ ∈ T.ant) := by
+lemma iff_mem_ant_and (hBC : (B ⋏ C) ∈ scope 𝔸 A) : (⟨B ⋏ C, hBC⟩ ∈ T.ant) ↔ (⟨B, by grind⟩ ∈ T.ant ∧ ⟨C, by grind⟩ ∈ T.ant) := by
   constructor;
   . rintro h;
     constructor <;> exact T.imp_closed (by grind) h;
@@ -181,7 +181,7 @@ lemma iff_mem_ant_and (hBC : (B ⋏ C) ∈ scope Λ A) : (⟨B ⋏ C, hBC⟩ ∈
     . grind;
 
 @[grind =>]
-lemma iff_mem_ant_or (hBC : (B ⋎ C) ∈ scope Λ A) : (⟨B ⋎ C, hBC⟩ ∈ T.ant) ↔ (⟨B, by grind⟩ ∈ T.ant ∨ ⟨C, by grind⟩ ∈ T.ant) := by
+lemma iff_mem_ant_or (hBC : (B ⋎ C) ∈ scope 𝔸 A) : (⟨B ⋎ C, hBC⟩ ∈ T.ant) ↔ (⟨B, by grind⟩ ∈ T.ant ∨ ⟨C, by grind⟩ ∈ T.ant) := by
   constructor;
   . rintro hBC;
     by_contra!;
@@ -195,7 +195,7 @@ lemma iff_mem_ant_or (hBC : (B ⋎ C) ∈ scope Λ A) : (⟨B ⋎ C, hBC⟩ ∈ 
     . exact T.imp_closed (by grind) hC;
 
 @[grind =>]
-lemma mem_ant_of_provable (hB : Λ ⊢ⱽ B.1) : B ∈ T.ant := imp_closed (by grind) mem_ant_top
+lemma mem_ant_of_provable (hB : ⊢ʰ[VF;𝔸] B.1) : B ∈ T.ant := imp_closed (by grind) mem_ant_top
 
 @[grind .]
 lemma not_mem_both : ¬(B ∈ T.ant ∧ B ∈ T.con) := by grind;
@@ -205,10 +205,10 @@ namespace lindenbaum
 
 open Classical
 
-noncomputable def next (T : Tableau Λ A) (B : ScopeOf Λ A) : Tableau Λ A :=
+noncomputable def next (T : Tableau 𝔸 A) (B : ScopeOf 𝔸 A) : Tableau 𝔸 A :=
   if Tableau.Consistent (Tableau.insertAnt T B) then Tableau.insertAnt T B else Tableau.insertCon T B
 
-variable {T : Tableau Λ A} {B : ScopeOf Λ A} {X : List (ScopeOf Λ A)}
+variable {T : Tableau 𝔸 A} {B : ScopeOf 𝔸 A} {X : List (ScopeOf 𝔸 A)}
 
 lemma next_consistent (hT : T.Consistent) : Tableau.Consistent (next T B) := by
   dsimp [next];
@@ -221,12 +221,12 @@ lemma next_monotone_con : T.con ⊆ (next T B).con := by grind [next, Tableau.in
 
 lemma next_of_mem : B ∈ (next T B).ant ∨ B ∈ (next T B).con := by grind [next, Tableau.insertAnt, Tableau.insertCon];
 
-noncomputable def enum (T : Tableau Λ A) : List (ScopeOf Λ A) → Tableau Λ A
+noncomputable def enum (T : Tableau 𝔸 A) : List (ScopeOf 𝔸 A) → Tableau 𝔸 A
   | [] => T
   | B :: X => next (enum T X) B
 
 @[simp, grind .]
-lemma enum_consistent (hT : T.Consistent) {X : List (ScopeOf Λ A)} : Tableau.Consistent (enum T X) := by
+lemma enum_consistent (hT : T.Consistent) {X : List (ScopeOf 𝔸 A)} : Tableau.Consistent (enum T X) := by
   induction X with
   | nil => trivial
   | cons _ _ ih => apply next_consistent ih;
@@ -260,8 +260,8 @@ lemma enum_of_mem (hB : B ∈ X) : B ∈ (enum T X).ant ∨ B ∈ (enum T X).con
 
 end lindenbaum
 
-noncomputable def lindenbaum (T : Tableau Λ A) (T_consis : T.Consistent) : SaturatedConsistentTableau Λ A where
-  toTableau := lindenbaum.enum (Λ := Λ) (A := A) T (Finset.univ.toList)
+noncomputable def lindenbaum (T : Tableau 𝔸 A) (T_consis : T.Consistent) : SaturatedConsistentTableau 𝔸 A where
+  toTableau := lindenbaum.enum (𝔸 := 𝔸) (A := A) T (Finset.univ.toList)
   consistent := lindenbaum.enum_consistent T_consis
   saturated := by
     ext B;
@@ -269,8 +269,8 @@ noncomputable def lindenbaum (T : Tableau Λ A) (T_consis : T.Consistent) : Satu
     apply lindenbaum.enum_of_mem;
     simp;
 
-@[simp, grind .] lemma lindenbaum_subset_ant {T : Tableau Λ A} {T_consis : T.Consistent} : T.ant ⊆ (lindenbaum T T_consis).ant := lindenbaum.enum_monotone_ant
-@[simp, grind .] lemma lindenbaum_subset_con {T : Tableau Λ A} {T_consis : T.Consistent} : T.con ⊆ (lindenbaum T T_consis).con := lindenbaum.enum_monotone_con
+@[simp, grind .] lemma lindenbaum_subset_ant {T : Tableau 𝔸 A} {T_consis : T.Consistent} : T.ant ⊆ (lindenbaum T T_consis).ant := lindenbaum.enum_monotone_ant
+@[simp, grind .] lemma lindenbaum_subset_con {T : Tableau 𝔸 A} {T_consis : T.Consistent} : T.con ⊆ (lindenbaum T T_consis).con := lindenbaum.enum_monotone_con
 
 end SaturatedConsistentTableau
 
@@ -278,37 +278,37 @@ end SaturatedConsistentTableau
 namespace FMTSemantics
 
 open Classical
-open ProvableVF
+open VF.ProvableHilbert
 open SaturatedConsistentTableau
 
-noncomputable abbrev countermodel.rootSeed (Λ : Axioms α) (A : Formula α) : Tableau Λ A where
+noncomputable abbrev countermodel.rootSeed (𝔸 : Axioms α) (A : Formula α) : Tableau 𝔸 A where
   ant := ∅
-  con := Finset.univ.filter (λ ⟨B, _⟩ => ∃ C D, B = C.1 🡒 D.1 ∧ ∃ T : SaturatedConsistentTableau Λ A, C ∈ T.ant ∧ D ∈ T.con )
+  con := Finset.univ.filter (λ ⟨B, _⟩ => ∃ C D, B = C.1 🡒 D.1 ∧ ∃ T : SaturatedConsistentTableau 𝔸 A, C ∈ T.ant ∧ D ∈ T.con )
 
 @[simp, grind .]
-lemma countermodel.rootSeed_consistent {Λ : Axioms α} [Λ.ConsistentVF] [Λ.DisjunctiveVF] : (countermodel.rootSeed Λ A).Consistent := by
+lemma countermodel.rootSeed_consistent {𝔸 : Axioms α} [VF.Consistent 𝔸] [VF.Disjunctive 𝔸] : (countermodel.rootSeed 𝔸 A).Consistent := by
   by_contra! hC;
-  replace hC : Λ ⊢ⱽ ⊤ 🡒 ⋁((rootSeed Λ A).con.image (·.1)) := by
+  replace hC : ⊢ʰ[VF;𝔸] ⊤ 🡒 ⋁((rootSeed 𝔸 A).con.image (·.1)) := by
     simpa only [rootSeed, Subtype.exists, exists_and_left, Finset.image_empty, Formula.sconj_emptyset]
     using (Tableau.iff_inconsistent.mp hC);
   replace hC := mdp hC verum;
-  wlog ne : (rootSeed Λ A).con.image (·.1) ≠ ∅;
-  . apply unprovable_bot (Λ := Λ);
+  wlog ne : (rootSeed 𝔸 A).con.image (·.1) ≠ ∅;
+  . apply unprovable_bot (𝔸 := 𝔸);
     grind;
-  obtain ⟨C, D, T, hC, hD, hCD⟩ : ∃ C D : ScopeOf Λ A, ∃ T : SaturatedConsistentTableau Λ A, C ∈ T.ant ∧ D ∈ T.con ∧ (Λ ⊢ⱽ C.1 🡒 D.1) := by
+  obtain ⟨C, D, T, hC, hD, hCD⟩ : ∃ C D : ScopeOf 𝔸 A, ∃ T : SaturatedConsistentTableau 𝔸 A, C ∈ T.ant ∧ D ∈ T.con ∧ (⊢ʰ[VF;𝔸] C.1 🡒 D.1) := by
     have := sdisj_disjunctive ne hC;
     unfold rootSeed at this;
     grind;
   apply T.consistent;
   apply ruleI₃ (B := C.1) (C := D.1) <;> grind;
 
-noncomputable def countermodel (Λ : Axioms α) (A) [Λ.ConsistentVF] [Λ.DisjunctiveVF] : Model (SaturatedConsistentTableau Λ A) α where
-  Val a T := (ha : #a ∈ scope Λ A) → ⟨#a, ha⟩ ∈ T.ant
+noncomputable def countermodel (𝔸 : Axioms α) (A) [VF.Consistent 𝔸] [VF.Disjunctive 𝔸] : Model (SaturatedConsistentTableau 𝔸 A) α where
+  Val a T := (ha : #a ∈ scope 𝔸 A) → ⟨#a, ha⟩ ∈ T.ant
   Rel' B T₁ T₂ :=
     match B with
-    | (C 🡒 D) => (h : C 🡒 D ∈ scope Λ A) → ⟨C 🡒 D, h⟩ ∈ T₁.con ∨ ⟨C, (by grind)⟩ ∈ T₂.con ∨ ⟨D, (by grind)⟩ ∈ T₂.ant
+    | (C 🡒 D) => (h : C 🡒 D ∈ scope 𝔸 A) → ⟨C 🡒 D, h⟩ ∈ T₁.con ∨ ⟨C, (by grind)⟩ ∈ T₂.con ∨ ⟨D, (by grind)⟩ ∈ T₂.ant
     | _ => True
-  root' := SaturatedConsistentTableau.lindenbaum (countermodel.rootSeed Λ A) (countermodel.rootSeed_consistent)
+  root' := SaturatedConsistentTableau.lindenbaum (countermodel.rootSeed 𝔸 A) (countermodel.rootSeed_consistent)
   root_rooted' := by
     intro B T;
     split;
@@ -321,9 +321,9 @@ noncomputable def countermodel (Λ : Axioms α) (A) [Λ.ConsistentVF] [Λ.Disjun
       grind;
     . trivial;
 
-variable [Λ.ConsistentVF] [Λ.DisjunctiveVF]
+variable [VF.Consistent 𝔸] [VF.Disjunctive 𝔸]
 
-lemma countermodel.truthlemma {T : (countermodel Λ A).World} (hB : B ∈ scope Λ A) : ⟨B, hB⟩ ∈ T.ant ↔ Forces T B := by
+lemma countermodel.truthlemma {T : (countermodel 𝔸 A).World} (hB : B ∈ scope 𝔸 A) : ⟨B, hB⟩ ∈ T.ant ↔ Forces T B := by
   induction B generalizing T with
   | atom a => tauto;
   | bot => grind;
@@ -343,7 +343,7 @@ lemma countermodel.truthlemma {T : (countermodel Λ A).World} (hB : B ∈ scope 
       apply iff_not_Forces_imp.mpr;
       use lindenbaum ⟨{⟨C, (by grind)⟩}, {⟨D, (by grind)⟩}⟩ $ by
         by_contra;
-        replace : Λ ⊢ⱽ C 🡒 D := by simpa using Tableau.iff_inconsistent.mp this;
+        replace : ⊢ʰ[VF;𝔸] C 🡒 D := by simpa using Tableau.iff_inconsistent.mp this;
         exact h $ T.mem_ant_of_provable this;
       refine ⟨?_, ?_, ?_⟩
       . intro _;
@@ -357,29 +357,29 @@ lemma countermodel.truthlemma {T : (countermodel Λ A).World} (hB : B ∈ scope 
         apply lindenbaum_subset_con;
         simp;
 
-lemma countermodel.valid_axioms : ∀ B ∈ Λ, (countermodel Λ A) ⊨ B := by
+lemma countermodel.valid_axioms : ∀ B ∈ 𝔸, (countermodel 𝔸 A) ⊨ B := by
   intro B hB T;
   exact countermodel.truthlemma _ |>.mp $ T.mem_ant_of_provable (B := ⟨B, mem_scope_of_mem_axioms hB⟩) (axm hB);
 
-theorem finite_model_property : (∀ {κ : Type u}, [Finite κ] → ∀ M : Model κ α, (∀ B ∈ Λ, M ⊨ B) → M ⊨ A) → Λ ⊢ⱽ A := by
+theorem finite_model_property : (∀ {κ : Type u}, [Finite κ] → ∀ M : Model κ α, (∀ B ∈ 𝔸, M ⊨ B) → M ⊨ A) → ⊢ʰ[VF;𝔸] A := by
   contrapose;
   intro h;
   push Not;
-  use (SaturatedConsistentTableau Λ A), inferInstance, countermodel Λ A;
+  use (SaturatedConsistentTableau 𝔸 A), inferInstance, countermodel 𝔸 A;
   constructor;
   . exact countermodel.valid_axioms;
   . apply iff_Valid_exists_world_not_Forces.mpr;
-    use lindenbaum (Λ := Λ) (A := A) ⟨∅, {⟨A, by grind⟩}⟩ $ by
+    use lindenbaum (𝔸 := 𝔸) (A := A) ⟨∅, {⟨A, by grind⟩}⟩ $ by
       by_contra;
-      replace : Λ ⊢ⱽ ⊤ 🡒 A := by simpa using Tableau.iff_inconsistent.mp this;
+      replace : ⊢ʰ[VF;𝔸] ⊤ 🡒 A := by simpa using Tableau.iff_inconsistent.mp this;
       exact h $ mdp this verum;;
     apply countermodel.truthlemma (by grind) |>.not.mp;
     apply iff_mem_con_not_mem_ant.mp;
     apply lindenbaum_subset_con;
     simp;
 
-theorem finite_frame_property (h_closed : ∀ B ∈ Λ, B.Closed)
-  : (∀ {κ : Type u}, [Finite κ] → ∀ F : Frame κ α, (∀ B ∈ Λ, F ⊨ B) → F ⊨ A) → Λ ⊢ⱽ A := by
+theorem finite_frame_property (h_closed : ∀ B ∈ 𝔸, B.Closed)
+  : (∀ {κ : Type u}, [Finite κ] → ∀ F : Frame κ α, (∀ B ∈ 𝔸, F ⊨ B) → F ⊨ A) → ⊢ʰ[VF;𝔸] A := by
   intro h;
   apply finite_model_property;
   intro κ hκ M hM;
@@ -387,19 +387,19 @@ theorem finite_frame_property (h_closed : ∀ B ∈ Λ, B.Closed)
   grind [iff_FrameValid_ModelValid_of_closed];
 
 theorem result_model : List.TFAE [
-  Λ ⊢ⱽ A,
-  ∀ {κ : Type u}, ∀ M : Model κ α, (∀ B ∈ Λ, M ⊨ B) → M ⊨ A,
-  ∀ {κ : Type u}, [Finite κ] → ∀ M : Model κ α, (∀ B ∈ Λ, M ⊨ B) → M ⊨ A
+  ⊢ʰ[VF;𝔸] A,
+  ∀ {κ : Type u}, ∀ M : Model κ α, (∀ B ∈ 𝔸, M ⊨ B) → M ⊨ A,
+  ∀ {κ : Type u}, [Finite κ] → ∀ M : Model κ α, (∀ B ∈ 𝔸, M ⊨ B) → M ⊨ A
 ] := by
   tfae_have 1 → 2 := by intro h _; apply soundness_model h;
   tfae_have 2 → 3 := by grind;
   tfae_have 3 → 1 := finite_model_property
   tfae_finish;
 
-theorem result_frame (h_closed : ∀ B ∈ Λ, B.Closed) : List.TFAE [
-  Λ ⊢ⱽ A,
-  ∀ {κ : Type u}, ∀ F : Frame κ α, (∀ B ∈ Λ, F ⊨ B) → F ⊨ A,
-  ∀ {κ : Type u}, [Finite κ] → ∀ F : Frame κ α, (∀ B ∈ Λ, F ⊨ B) → F ⊨ A
+theorem result_frame (h_closed : ∀ B ∈ 𝔸, B.Closed) : List.TFAE [
+  ⊢ʰ[VF;𝔸] A,
+  ∀ {κ : Type u}, ∀ F : Frame κ α, (∀ B ∈ 𝔸, F ⊨ B) → F ⊨ A,
+  ∀ {κ : Type u}, [Finite κ] → ∀ F : Frame κ α, (∀ B ∈ 𝔸, F ⊨ B) → F ⊨ A
 ] := by
   tfae_have 1 → 2 := by intro h _; apply soundness_frame h;
   tfae_have 2 → 3 := by grind;
@@ -410,12 +410,12 @@ theorem result_frame (h_closed : ∀ B ∈ Λ, B.Closed) : List.TFAE [
 
 
 theorem VF_completeness : List.TFAE [
-  ∅ ⊢ⱽ A,
+  ⊢ʰ[VF;∅] A,
   ∀ {κ : Type u}, ∀ F : Frame κ α, F ⊨ A,
   ∀ {κ : Type u}, [Finite κ] → ∀ F : Frame κ α, F ⊨ A
 ] := by
   have : Fact (∀ A ∈ (∅ : Axioms α), A.IsClosedNegativeAxiom) := ⟨by grind⟩;
-  simpa using result_frame (Λ := ∅) (by simp);
+  simpa using result_frame (𝔸 := ∅) (by simp);
 
 omit [DecidableEq α] in
 lemma iff_validates_negnegtop {F : Frame κ α} : (F ⊨ ∼∼⊤) ↔ (∀ x : F.World, ∃ y, x ≺[∼⊤] y) := by
@@ -423,11 +423,11 @@ lemma iff_validates_negnegtop {F : Frame κ α} : (F ⊨ ∼∼⊤) ↔ (∀ x :
   simp;
 
 theorem VFSer_completeness : List.TFAE [
-  {∼∼⊤} ⊢ⱽ A,
+  ⊢ʰ[VF;{∼∼⊤}] A,
   ∀ {κ : Type u}, ∀ F : Frame κ α, (∀ x : F.World, ∃ y, x ≺[∼⊤] y) → F ⊨ A,
   ∀ {κ : Type u}, [Finite κ] → ∀ F : Frame κ α, (∀ x : F.World, ∃ y, x ≺[∼⊤] y) → F ⊨ A
 ] := by
   have : Fact (∀ A ∈ ({∼∼⊤} : Axioms α), A.IsClosedNegativeAxiom) := ⟨by grind⟩;
-  simpa [iff_validates_negnegtop] using result_frame (Λ := {∼∼⊤}) (by grind);
+  simpa [iff_validates_negnegtop] using result_frame (𝔸 := {∼∼⊤}) (by grind);
 
 end FMTSemantics

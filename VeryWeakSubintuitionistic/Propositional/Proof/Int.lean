@@ -6,37 +6,40 @@ public import VeryWeakSubintuitionistic.Propositional.Proof.VF
 
 variable {α : Type*}
 
-inductive ProofInt (Λ : Axioms α) : Formula α → Type _
-| axm {A}                 : A ∈ Λ → ProofInt Λ A
-| andElimL {A B}          : ProofInt Λ $ (A ⋏ B) 🡒 A
-| andElimR {A B}          : ProofInt Λ $ (A ⋏ B) 🡒 B
-| andIntro {A B}          : ProofInt Λ $ (A 🡒 B 🡒 (A ⋏ B))
-| orIntroL {A B}          : ProofInt Λ $ A 🡒 (A ⋎ B)
-| orIntroR {A B}          : ProofInt Λ $ B 🡒 (A ⋎ B)
-| orElim {A B C}          : ProofInt Λ $ (A 🡒 C) 🡒 (B 🡒 C) 🡒 ((A ⋎ B) 🡒 C)
-| implyK {A B}            : ProofInt Λ $ A 🡒 B 🡒 A
-| implyS {A B C}          : ProofInt Λ $ (A 🡒 B 🡒 C) 🡒 (A 🡒 B) 🡒 (A 🡒 C)
-| verum                   : ProofInt Λ $ ⊤
-| efq {A}                 : ProofInt Λ $ ⊥ 🡒 A
-| mdp {A B}               : ProofInt Λ (A 🡒 B) → ProofInt Λ A → ProofInt Λ B
-infix:25 " ⊢ᴵ! " => ProofInt
+namespace Int
 
-namespace ProofInt
+inductive ProofHilbert (𝔸 : Axioms α) : Formula α → Type _
+| axm {A}                 : A ∈ 𝔸 → ProofHilbert 𝔸 A
+| andElimL {A B}          : ProofHilbert 𝔸 $ (A ⋏ B) 🡒 A
+| andElimR {A B}          : ProofHilbert 𝔸 $ (A ⋏ B) 🡒 B
+| andIntro {A B}          : ProofHilbert 𝔸 $ (A 🡒 B 🡒 (A ⋏ B))
+| orIntroL {A B}          : ProofHilbert 𝔸 $ A 🡒 (A ⋎ B)
+| orIntroR {A B}          : ProofHilbert 𝔸 $ B 🡒 (A ⋎ B)
+| orElim {A B C}          : ProofHilbert 𝔸 $ (A 🡒 C) 🡒 (B 🡒 C) 🡒 ((A ⋎ B) 🡒 C)
+| implyK {A B}            : ProofHilbert 𝔸 $ A 🡒 B 🡒 A
+| implyS {A B C}          : ProofHilbert 𝔸 $ (A 🡒 B 🡒 C) 🡒 (A 🡒 B) 🡒 (A 🡒 C)
+| verum                   : ProofHilbert 𝔸 $ ⊤
+| efq {A}                 : ProofHilbert 𝔸 $ ⊥ 🡒 A
+| mdp {A B}               : ProofHilbert 𝔸 (A 🡒 B) → ProofHilbert 𝔸 A → ProofHilbert 𝔸 B
 
-variable {Λ Λ₁ Λ₂ : Axioms α} {A B C : Formula α}
+notation:50 "⊢ʰ![Int;" 𝔸 "] " A:51 => Int.ProofHilbert 𝔸 A
 
-def af {A B} : Λ ⊢ᴵ! A → Λ ⊢ᴵ! (B 🡒 A) := λ h => mdp implyK h
+namespace ProofHilbert
 
-def impId : Λ ⊢ᴵ! A 🡒 A := by
-  haveI : Λ ⊢ᴵ! (A 🡒 (A 🡒 A) 🡒 A) 🡒 (A 🡒 A 🡒 A) 🡒 (A 🡒 A) := implyS;
-  haveI : Λ ⊢ᴵ! (A 🡒 A 🡒 A) 🡒 (A 🡒 A) := mdp this implyK;
-  haveI : Λ ⊢ᴵ! A 🡒 A := mdp this implyK;
+variable {𝔸 𝔸₁ 𝔸₂ : Axioms α} {A B C : Formula α}
+
+def af {A B} : ⊢ʰ![Int;𝔸] A → ⊢ʰ![Int;𝔸] (B 🡒 A) := λ h => mdp implyK h
+
+def impId : ⊢ʰ![Int;𝔸] (A 🡒 A) := by
+  haveI : ⊢ʰ![Int;𝔸] ((A 🡒 (A 🡒 A) 🡒 A) 🡒 (A 🡒 A 🡒 A) 🡒 (A 🡒 A)) := implyS;
+  haveI : ⊢ʰ![Int;𝔸] ((A 🡒 A 🡒 A) 🡒 (A 🡒 A)) := mdp this implyK;
+  haveI : ⊢ʰ![Int;𝔸] (A 🡒 A) := mdp this implyK;
   exact this;
 
-def andElimRuleL : Λ ⊢ᴵ! A ⋏ B → Λ ⊢ᴵ! A := λ h => mdp andElimL h
-def andElimRuleR : Λ ⊢ᴵ! A ⋏ B → Λ ⊢ᴵ! B := λ h => mdp andElimR h
+def andElimRuleL : ⊢ʰ![Int;𝔸] (A ⋏ B) → ⊢ʰ![Int;𝔸] A := λ h => mdp andElimL h
+def andElimRuleR : ⊢ʰ![Int;𝔸] (A ⋏ B) → ⊢ʰ![Int;𝔸] B := λ h => mdp andElimR h
 
-noncomputable def ofSubsetAxm (hsub : Λ₁ ⊆ Λ₂) : Λ₁ ⊢ᴵ! A → Λ₂ ⊢ᴵ! A := λ h => by
+noncomputable def ofSubsetAxm (hsub : 𝔸₁ ⊆ 𝔸₂) : (⊢ʰ![Int;𝔸₁] A) → ⊢ʰ![Int;𝔸₂] A := λ h => by
   induction h with
   | axm h₁ => exact axm (hsub h₁)
   | andElimL => exact andElimL
@@ -51,43 +54,43 @@ noncomputable def ofSubsetAxm (hsub : Λ₁ ⊆ Λ₂) : Λ₁ ⊢ᴵ! A → Λ�
   | efq => exact efq
   | mdp _ _ ihAB ihA => exact mdp ihAB ihA
 
-end ProofInt
+end ProofHilbert
 
 
+abbrev ProvableHilbert (𝔸 : Axioms α) (A : Formula α) : Prop := Nonempty (⊢ʰ![Int;𝔸] A)
 
-abbrev ProvableInt (Λ : Axioms α) (A : Formula α) : Prop := Nonempty (Λ ⊢ᴵ! A)
-infix:25 " ⊢ᴵ " => ProvableInt
+end Int
 
-abbrev UnprovableInt (Λ : Axioms α) (A : Formula α) : Prop := ¬(Λ ⊢ᴵ A)
-infix:25 " ⊬ᴵ " => UnprovableInt
+notation:50 "⊢ʰ[Int;" 𝔸 "] " A:51 => Int.ProvableHilbert 𝔸 A
+notation:50 "⊬ʰ[Int;" 𝔸 "] " A:51 => ¬(Int.ProvableHilbert 𝔸 A)
 
-namespace ProvableInt
+namespace Int.ProvableHilbert
 
-variable {Λ : Axioms α} {A B C : Formula α}
+variable {𝔸 : Axioms α} {A B C : Formula α}
 
-@[grind =>] lemma axm : A ∈ Λ → Λ ⊢ᴵ A := λ h => ⟨ProofInt.axm h⟩
-@[simp, grind .] lemma implyK : Λ ⊢ᴵ A 🡒 B 🡒 A := ⟨ProofInt.implyK⟩
-@[simp, grind .] lemma implyS : Λ ⊢ᴵ (A 🡒 B 🡒 C) 🡒 (A 🡒 B) 🡒 (A 🡒 C) := ⟨ProofInt.implyS⟩
-@[simp, grind .] lemma andElimL : Λ ⊢ᴵ (A ⋏ B) 🡒 A := ⟨ProofInt.andElimL⟩
-@[simp, grind .] lemma andElimR : Λ ⊢ᴵ (A ⋏ B) 🡒 B := ⟨ProofInt.andElimR⟩
-@[simp, grind .] lemma andIntro : Λ ⊢ᴵ (A 🡒 B 🡒 (A ⋏ B)) := ⟨ProofInt.andIntro⟩
-@[simp, grind .] lemma orIntroL : Λ ⊢ᴵ A 🡒 (A ⋎ B) := ⟨ProofInt.orIntroL⟩
-@[simp, grind .] lemma orIntroR : Λ ⊢ᴵ B 🡒 (A ⋎ B) := ⟨ProofInt.orIntroR⟩
-@[simp, grind .] lemma orElim : Λ ⊢ᴵ (A 🡒 C) 🡒 (B 🡒 C) 🡒 ((A ⋎ B) 🡒 C) := ⟨ProofInt.orElim⟩
-@[simp, grind .] lemma efq : Λ ⊢ᴵ ⊥ 🡒 A := ⟨ProofInt.efq⟩
-@[simp, grind .] lemma verum : Λ ⊢ᴵ ⊤ := ⟨ProofInt.verum⟩
-@[simp, grind .] lemma impId : Λ ⊢ᴵ A 🡒 A := ⟨ProofInt.impId⟩
-@[grind =>] lemma mdp : Λ ⊢ᴵ A 🡒 B → Λ ⊢ᴵ A → Λ ⊢ᴵ B := λ ⟨h₁⟩ ⟨h₂⟩ => ⟨ProofInt.mdp h₁ h₂⟩
-@[grind <=] lemma af : Λ ⊢ᴵ A → Λ ⊢ᴵ B 🡒 A := λ ⟨h⟩ => ⟨ProofInt.af h⟩
+@[grind =>] lemma axm : A ∈ 𝔸 → ⊢ʰ[Int;𝔸] A := λ h => ⟨ProofHilbert.axm h⟩
+@[simp, grind .] lemma implyK : ⊢ʰ[Int;𝔸] A 🡒 B 🡒 A := ⟨ProofHilbert.implyK⟩
+@[simp, grind .] lemma implyS : ⊢ʰ[Int;𝔸] (A 🡒 B 🡒 C) 🡒 (A 🡒 B) 🡒 (A 🡒 C) := ⟨ProofHilbert.implyS⟩
+@[simp, grind .] lemma andElimL : ⊢ʰ[Int;𝔸] (A ⋏ B) 🡒 A := ⟨ProofHilbert.andElimL⟩
+@[simp, grind .] lemma andElimR : ⊢ʰ[Int;𝔸] (A ⋏ B) 🡒 B := ⟨ProofHilbert.andElimR⟩
+@[simp, grind .] lemma andIntro : ⊢ʰ[Int;𝔸] (A 🡒 B 🡒 (A ⋏ B)) := ⟨ProofHilbert.andIntro⟩
+@[simp, grind .] lemma orIntroL : ⊢ʰ[Int;𝔸] A 🡒 (A ⋎ B) := ⟨ProofHilbert.orIntroL⟩
+@[simp, grind .] lemma orIntroR : ⊢ʰ[Int;𝔸] B 🡒 (A ⋎ B) := ⟨ProofHilbert.orIntroR⟩
+@[simp, grind .] lemma orElim : ⊢ʰ[Int;𝔸] (A 🡒 C) 🡒 (B 🡒 C) 🡒 ((A ⋎ B) 🡒 C) := ⟨ProofHilbert.orElim⟩
+@[simp, grind .] lemma efq : ⊢ʰ[Int;𝔸] ⊥ 🡒 A := ⟨ProofHilbert.efq⟩
+@[simp, grind .] lemma verum : ⊢ʰ[Int;𝔸] (⊤ : Formula α) := ⟨ProofHilbert.verum⟩
+@[simp, grind .] lemma impId : ⊢ʰ[Int;𝔸] A 🡒 A := ⟨ProofHilbert.impId⟩
+@[grind =>] lemma mdp : (⊢ʰ[Int;𝔸] A 🡒 B) → (⊢ʰ[Int;𝔸] A) → ⊢ʰ[Int;𝔸] B := λ ⟨h₁⟩ ⟨h₂⟩ => ⟨ProofHilbert.mdp h₁ h₂⟩
+@[grind <=] lemma af : (⊢ʰ[Int;𝔸] A) → ⊢ʰ[Int;𝔸] B 🡒 A := λ ⟨h⟩ => ⟨ProofHilbert.af h⟩
 
-@[grind =>] lemma andElimRuleL : Λ ⊢ᴵ A ⋏ B → Λ ⊢ᴵ A := λ h => mdp andElimL h
-@[grind =>] lemma andElimRuleR : Λ ⊢ᴵ A ⋏ B → Λ ⊢ᴵ B := λ h => mdp andElimR h
+@[grind =>] lemma andElimRuleL : (⊢ʰ[Int;𝔸] A ⋏ B) → ⊢ʰ[Int;𝔸] A := λ h => mdp andElimL h
+@[grind =>] lemma andElimRuleR : (⊢ʰ[Int;𝔸] A ⋏ B) → ⊢ʰ[Int;𝔸] B := λ h => mdp andElimR h
 
 @[induction_eliminator]
 protected lemma rec
-  {motive          : (A : Formula α) → (Λ ⊢ᴵ A) → Prop}
-  (axm             : ∀ {A}, (h : A ∈ Λ) → motive A (axm h))
-  (mdp             : ∀ {A B}, {hAB : Λ ⊢ᴵ A 🡒 B} → {hA : Λ ⊢ᴵ A} → (motive (A 🡒 B) hAB) → (motive A hA) → (motive B (mdp hAB hA)))
+  {motive          : (A : Formula α) → (⊢ʰ[Int;𝔸] A) → Prop}
+  (axm             : ∀ {A}, (h : A ∈ 𝔸) → motive A (axm h))
+  (mdp             : ∀ {A B}, {hAB : ⊢ʰ[Int;𝔸] A 🡒 B} → {hA : ⊢ʰ[Int;𝔸] A} → (motive (A 🡒 B) hAB) → (motive A hA) → (motive B (mdp hAB hA)))
   (verum           : motive (⊤ : Formula α) verum)
   (andElimL        : ∀ {A B}, (motive ((A ⋏ B) 🡒 A) andElimL))
   (andElimR        : ∀ {A B}, (motive ((A ⋏ B) 🡒 B) andElimR))
@@ -98,43 +101,48 @@ protected lemma rec
   (implyK          : ∀ {A B}, (motive (A 🡒 B 🡒 A) implyK))
   (implyS          : ∀ {A B C}, (motive ((A 🡒 B 🡒 C) 🡒 (A 🡒 B) 🡒 (A 🡒 C)) implyS))
   (efq             : ∀ {A}, (motive (⊥ 🡒 A) efq))
-  : ∀ {A}, (d : Λ ⊢ᴵ A) → motive A d := by rintro A ⟨d⟩; induction d <;> grind;
+  : ∀ {A}, (d : ⊢ʰ[Int;𝔸] A) → motive A d := by rintro A ⟨d⟩; induction d <;> grind;
 
-end ProvableInt
+end Int.ProvableHilbert
 
 
-inductive DeductionInt (Λ : Axioms α) : Set (Formula α) → Formula α → Type _
-| ofProof {X A} : ProofInt Λ A → DeductionInt Λ X A
-| ofContext {X A} : A ∈ X → DeductionInt Λ X A
-| mdp {X A B} : (DeductionInt Λ X (A 🡒 B)) → (DeductionInt Λ X A) → (DeductionInt Λ X B)
-notation:25 X " ⊢ᴵ[" Λ "]! " A => DeductionInt Λ X A
+namespace Int
 
-abbrev DeducibleInt (Λ : Axioms α) (X : Set (Formula α)) (A : Formula α) : Prop := Nonempty (X ⊢ᴵ[Λ]! A)
-notation:25 X " ⊢ᴵ[" Λ "] " A => DeducibleInt Λ X A
+inductive DeductionHilbert (𝔸 : Axioms α) : Set (Formula α) → Formula α → Type _
+| ofProof {X A} : ⊢ʰ![Int;𝔸] A → DeductionHilbert 𝔸 X A
+| ofContext {X A} : A ∈ X → DeductionHilbert 𝔸 X A
+| mdp {X A B} : (DeductionHilbert 𝔸 X (A 🡒 B)) → (DeductionHilbert 𝔸 X A) → (DeductionHilbert 𝔸 X B)
 
-namespace DeducibleInt
+abbrev DeducibleHilbert (𝔸 : Axioms α) (X : Set (Formula α)) (A : Formula α) : Prop := Nonempty (DeductionHilbert 𝔸 X A)
 
-variable {Λ : Axioms α} {X : Set (Formula α)} {A B C : Formula α}
+end Int
 
-@[grind <=] lemma ofProvable {X A} : Λ ⊢ᴵ A → X ⊢ᴵ[Λ] A := λ ⟨h⟩ => ⟨DeductionInt.ofProof h⟩
-@[grind <=] lemma ofContext {X A} : A ∈ X → X ⊢ᴵ[Λ] A := λ h => ⟨DeductionInt.ofContext h⟩
-@[grind =>] lemma mdp {X A B} : (X ⊢ᴵ[Λ] A 🡒 B) → (X ⊢ᴵ[Λ] A) → (X ⊢ᴵ[Λ] B) := λ ⟨h₁⟩ ⟨h₂⟩ => ⟨DeductionInt.mdp h₁ h₂⟩
+notation:50 X:51 " ⊢ʰ![Int;" 𝔸 "] " A:51 => Int.DeductionHilbert 𝔸 X A
+notation:50 X:51 " ⊢ʰ[Int;" 𝔸 "] " A:51 => Int.DeducibleHilbert 𝔸 X A
+
+namespace Int.DeducibleHilbert
+
+variable {𝔸 : Axioms α} {X : Set (Formula α)} {A B C : Formula α}
+
+@[grind <=] lemma ofProvable {X A} : (⊢ʰ[Int;𝔸] A) → X ⊢ʰ[Int;𝔸] A := λ ⟨h⟩ => ⟨DeductionHilbert.ofProof h⟩
+@[grind <=] lemma ofContext {X A} : A ∈ X → X ⊢ʰ[Int;𝔸] A := λ h => ⟨DeductionHilbert.ofContext h⟩
+@[grind =>] lemma mdp {X A B} : (X ⊢ʰ[Int;𝔸] A 🡒 B) → (X ⊢ʰ[Int;𝔸] A) → (X ⊢ʰ[Int;𝔸] B) := λ ⟨h₁⟩ ⟨h₂⟩ => ⟨DeductionHilbert.mdp h₁ h₂⟩
 
 @[induction_eliminator]
 protected lemma rec
-  {motive : (X : Set (Formula α)) → (A : Formula α) → (X ⊢ᴵ[Λ] A) → Prop}
-  (ofProvable : ∀ {X A}, (h : Λ ⊢ᴵ A) → motive X A (ofProvable h))
+  {motive : (X : Set (Formula α)) → (A : Formula α) → (X ⊢ʰ[Int;𝔸] A) → Prop}
+  (ofProvable : ∀ {X A}, (h : ⊢ʰ[Int;𝔸] A) → motive X A (ofProvable h))
   (ofContext : ∀ {X A}, (h : A ∈ X) → motive X A (ofContext h))
-  (mdp : ∀ {X A B}, (hAB : X ⊢ᴵ[Λ] A 🡒 B) → (hA : X ⊢ᴵ[Λ] A) → (motive X (A 🡒 B) hAB) → (motive X A hA) → (motive X B (mdp hAB hA)))
-  : ∀ {X A}, (h : X ⊢ᴵ[Λ] A) → motive X A h := by
+  (mdp : ∀ {X A B}, (hAB : X ⊢ʰ[Int;𝔸] A 🡒 B) → (hA : X ⊢ʰ[Int;𝔸] A) → (motive X (A 🡒 B) hAB) → (motive X A hA) → (motive X B (mdp hAB hA)))
+  : ∀ {X A}, (h : X ⊢ʰ[Int;𝔸] A) → motive X A h := by
   rintro X A ⟨h⟩;
   induction h with
   | ofProof h => apply ofProvable ⟨h⟩;
   | _ => grind;
 
-lemma of_subset_ctx {X Y : Set (Formula α)} (hXY : X ⊆ Y) : (X ⊢ᴵ[Λ] A) → (Y ⊢ᴵ[Λ] A) := λ h => by induction h <;> grind;
+lemma of_subset_ctx {X Y : Set (Formula α)} (hXY : X ⊆ Y) : (X ⊢ʰ[Int;𝔸] A) → (Y ⊢ʰ[Int;𝔸] A) := λ h => by induction h <;> grind;
 
-lemma to_ctx {X A B} : (X ⊢ᴵ[Λ] A 🡒 B) → (insert A X ⊢ᴵ[Λ] B) := λ h => by
+lemma to_ctx {X A B} : (X ⊢ʰ[Int;𝔸] A 🡒 B) → (insert A X ⊢ʰ[Int;𝔸] B) := λ h => by
   apply mdp;
   . apply of_subset_ctx (X := X) (Y := insert A X);
     . tauto;
@@ -142,117 +150,116 @@ lemma to_ctx {X A B} : (X ⊢ᴵ[Λ] A 🡒 B) → (insert A X ⊢ᴵ[Λ] B) := 
   . apply ofContext;
     simp;
 
-lemma drop_ctx {X A B} : (insert A X ⊢ᴵ[Λ] B) → (X ⊢ᴵ[Λ] A 🡒 B) := λ h => by
+lemma drop_ctx {X A B} : (insert A X ⊢ʰ[Int;𝔸] B) → (X ⊢ʰ[Int;𝔸] A 🡒 B) := λ h => by
   generalize eY : insert A X = Y at h
   induction h with
   | ofProvable h => grind;
   | ofContext hB =>
     subst eY;
     rcases hB with rfl | hB
-    . exact ofProvable $ ProvableInt.impId;
+    . exact ofProvable $ ProvableHilbert.impId;
     . apply mdp;
-      . exact ofProvable ProvableInt.implyK;
+      . exact ofProvable ProvableHilbert.implyK;
       . exact ofContext hB;
   | mdp _ _ ihAB ihA =>
     subst eY;
     replace ihAB := ihAB rfl
     replace ihA := ihA rfl;
-    exact mdp (mdp (ofProvable ProvableInt.implyS) ihAB) ihA;
+    exact mdp (mdp (ofProvable ProvableHilbert.implyS) ihAB) ihA;
 
-theorem deduction_theorem {X A B} : (X ⊢ᴵ[Λ] A 🡒 B) ↔ (insert A X ⊢ᴵ[Λ] B) := by
+theorem deduction_theorem {X A B} : (X ⊢ʰ[Int;𝔸] A 🡒 B) ↔ (insert A X ⊢ʰ[Int;𝔸] B) := by
   constructor
   . apply to_ctx;
   . apply drop_ctx;
 
-lemma iff_empty_ctx {A} : (∅ ⊢ᴵ[Λ] A) ↔ (Λ ⊢ᴵ A) := by
+lemma iff_empty_ctx {A} : ((∅ : Set (Formula α)) ⊢ʰ[Int;𝔸] A) ↔ (⊢ʰ[Int;𝔸] A) := by
   constructor
   . rintro h;
     generalize eX : (∅ : Set (Formula α)) = X at h;
     induction h <;> grind;
   . grind;
 
-lemma iff_singleton_deducible_provable {A B} : ({A} ⊢ᴵ[Λ] B) ↔ (Λ ⊢ᴵ A 🡒 B) := by
+lemma iff_singleton_deducible_provable {A B} : (({A} : Set (Formula α)) ⊢ʰ[Int;𝔸] B) ↔ (⊢ʰ[Int;𝔸] A 🡒 B) := by
   rw [show (({A} : Set (Formula α)) = (insert A ∅)) by grind];
   apply Iff.trans (deduction_theorem.symm) iff_empty_ctx;
 
-lemma andElimRuleL : (X ⊢ᴵ[Λ] A ⋏ B) → (X ⊢ᴵ[Λ] A) := λ hAB => mdp (ofProvable $ ProvableInt.andElimL) hAB
-lemma andElimRuleR : (X ⊢ᴵ[Λ] A ⋏ B) → (X ⊢ᴵ[Λ] B) := λ hAB => mdp (ofProvable $ ProvableInt.andElimR) hAB
-lemma andIntroRule : (X ⊢ᴵ[Λ] A) → (X ⊢ᴵ[Λ] B) → (X ⊢ᴵ[Λ] A ⋏ B) := λ hA hB => mdp (mdp (ofProvable ProvableInt.andIntro) hA) hB
-lemma orIntroRuleL : (X ⊢ᴵ[Λ] A) → (X ⊢ᴵ[Λ] A ⋎ B) := λ hA => mdp (ofProvable $ ProvableInt.orIntroL) hA
-lemma orIntroRuleR : (X ⊢ᴵ[Λ] B) → (X ⊢ᴵ[Λ] A ⋎ B) := λ hB => mdp (ofProvable $ ProvableInt.orIntroR) hB
-lemma orElimRule : (X ⊢ᴵ[Λ] A 🡒 C) → (X ⊢ᴵ[Λ] B 🡒 C) → (X ⊢ᴵ[Λ] (A ⋎ B)) → X ⊢ᴵ[Λ] C := λ hAC hBC hAB => mdp (mdp (mdp (ofProvable $ ProvableInt.orElim) hAC) hBC) hAB
+lemma andElimRuleL : (X ⊢ʰ[Int;𝔸] A ⋏ B) → (X ⊢ʰ[Int;𝔸] A) := λ hAB => mdp (ofProvable $ ProvableHilbert.andElimL) hAB
+lemma andElimRuleR : (X ⊢ʰ[Int;𝔸] A ⋏ B) → (X ⊢ʰ[Int;𝔸] B) := λ hAB => mdp (ofProvable $ ProvableHilbert.andElimR) hAB
+lemma andIntroRule : (X ⊢ʰ[Int;𝔸] A) → (X ⊢ʰ[Int;𝔸] B) → (X ⊢ʰ[Int;𝔸] A ⋏ B) := λ hA hB => mdp (mdp (ofProvable ProvableHilbert.andIntro) hA) hB
+lemma orIntroRuleL : (X ⊢ʰ[Int;𝔸] A) → (X ⊢ʰ[Int;𝔸] A ⋎ B) := λ hA => mdp (ofProvable $ ProvableHilbert.orIntroL) hA
+lemma orIntroRuleR : (X ⊢ʰ[Int;𝔸] B) → (X ⊢ʰ[Int;𝔸] A ⋎ B) := λ hB => mdp (ofProvable $ ProvableHilbert.orIntroR) hB
+lemma orElimRule : (X ⊢ʰ[Int;𝔸] A 🡒 C) → (X ⊢ʰ[Int;𝔸] B 🡒 C) → (X ⊢ʰ[Int;𝔸] (A ⋎ B)) → X ⊢ʰ[Int;𝔸] C := λ hAC hBC hAB => mdp (mdp (mdp (ofProvable $ ProvableHilbert.orElim) hAC) hBC) hAB
 
-end DeducibleInt
+end Int.DeducibleHilbert
 
-namespace ProvableInt
+namespace Int.ProvableHilbert
 
-variable {Λ : Axioms α} {A B C : Formula α}
+variable {𝔸 : Axioms α} {A B C : Formula α}
 
 @[grind <=]
-lemma ruleC : Λ ⊢ᴵ A 🡒 B → Λ ⊢ᴵ A 🡒 C → Λ ⊢ᴵ A 🡒 (B ⋏ C) := by
+lemma ruleC : (⊢ʰ[Int;𝔸] A 🡒 B) → (⊢ʰ[Int;𝔸] A 🡒 C) → ⊢ʰ[Int;𝔸] A 🡒 (B ⋏ C) := by
   intro hAB hAC;
-  apply DeducibleInt.iff_singleton_deducible_provable.mp;
-  replace hAB : {A} ⊢ᴵ[Λ] B := DeducibleInt.iff_singleton_deducible_provable.mpr hAB;
-  replace hAC : {A} ⊢ᴵ[Λ] C := DeducibleInt.iff_singleton_deducible_provable.mpr hAC;
-  have        : {A} ⊢ᴵ[Λ] (B 🡒 C 🡒 (B ⋏ C)) := DeducibleInt.ofProvable $ ProvableInt.andIntro;
-  exact DeducibleInt.mdp (DeducibleInt.mdp this hAB) hAC
+  apply DeducibleHilbert.iff_singleton_deducible_provable.mp;
+  replace hAB : ({A} : Set (Formula α)) ⊢ʰ[Int;𝔸] B := DeducibleHilbert.iff_singleton_deducible_provable.mpr hAB;
+  replace hAC : ({A} : Set (Formula α)) ⊢ʰ[Int;𝔸] C := DeducibleHilbert.iff_singleton_deducible_provable.mpr hAC;
+  have        : ({A} : Set (Formula α)) ⊢ʰ[Int;𝔸] (B 🡒 C 🡒 (B ⋏ C)) := DeducibleHilbert.ofProvable $ ProvableHilbert.andIntro;
+  exact DeducibleHilbert.mdp (DeducibleHilbert.mdp this hAB) hAC
 
 @[grind <=]
-lemma ruleD : Λ ⊢ᴵ A 🡒 C → Λ ⊢ᴵ B 🡒 C → Λ ⊢ᴵ (A ⋎ B) 🡒 C := by
+lemma ruleD : (⊢ʰ[Int;𝔸] A 🡒 C) → (⊢ʰ[Int;𝔸] B 🡒 C) → ⊢ʰ[Int;𝔸] (A ⋎ B) 🡒 C := by
   intro hAC hBC;
-  apply DeducibleInt.iff_singleton_deducible_provable.mp;
-  have : ({A ⋎ B} : Set (Formula α)) ⊢ᴵ[Λ] (A 🡒 C) 🡒 (B 🡒 C) 🡒 ((A ⋎ B) 🡒 C) := .ofProvable $ .orElim;
-  have : {A ⋎ B} ⊢ᴵ[Λ] (A ⋎ B) 🡒 C := .mdp (.mdp this (.ofProvable hAC)) (.ofProvable hBC);
+  apply DeducibleHilbert.iff_singleton_deducible_provable.mp;
+  have : ({A ⋎ B} : Set (Formula α)) ⊢ʰ[Int;𝔸] (A 🡒 C) 🡒 (B 🡒 C) 🡒 ((A ⋎ B) 🡒 C) := .ofProvable $ .orElim;
+  have : ({A ⋎ B} : Set (Formula α)) ⊢ʰ[Int;𝔸] (A ⋎ B) 🡒 C := .mdp (.mdp this (.ofProvable hAC)) (.ofProvable hBC);
   exact .mdp this (.ofContext $ by simp);
 
 @[grind =>]
-lemma ruleI : Λ ⊢ᴵ A 🡒 B → Λ ⊢ᴵ B 🡒 C → Λ ⊢ᴵ A 🡒 C := by
+lemma ruleI : (⊢ʰ[Int;𝔸] A 🡒 B) → (⊢ʰ[Int;𝔸] B 🡒 C) → ⊢ʰ[Int;𝔸] A 🡒 C := by
   intro hAB hBC;
-  apply DeducibleInt.iff_singleton_deducible_provable.mp;
-  replace hAB : {A} ⊢ᴵ[Λ] B := DeducibleInt.iff_singleton_deducible_provable.mpr hAB;
-  replace hBC : {A} ⊢ᴵ[Λ] B 🡒 C := DeducibleInt.ofProvable hBC;
-  exact DeducibleInt.mdp hBC hAB;
+  apply DeducibleHilbert.iff_singleton_deducible_provable.mp;
+  replace hAB : ({A} : Set (Formula α)) ⊢ʰ[Int;𝔸] B := DeducibleHilbert.iff_singleton_deducible_provable.mpr hAB;
+  replace hBC : ({A} : Set (Formula α)) ⊢ʰ[Int;𝔸] B 🡒 C := DeducibleHilbert.ofProvable hBC;
+  exact DeducibleHilbert.mdp hBC hAB;
 
 @[grind .]
-lemma distributeAndOr : Λ ⊢ᴵ (A ⋏ (B ⋎ C)) 🡒 ((A ⋏ B) ⋎ (A ⋏ C)) := by
-  apply DeducibleInt.iff_singleton_deducible_provable.mp;
-  have hA : {A ⋏ (B ⋎ C)} ⊢ᴵ[Λ] A := DeducibleInt.andElimRuleL (B := B ⋎ C) $ DeducibleInt.ofContext (by simp);
+lemma distributeAndOr : ⊢ʰ[Int;𝔸] (A ⋏ (B ⋎ C)) 🡒 ((A ⋏ B) ⋎ (A ⋏ C)) := by
+  apply DeducibleHilbert.iff_singleton_deducible_provable.mp;
+  have hA : ({A ⋏ (B ⋎ C)} : Set (Formula α)) ⊢ʰ[Int;𝔸] A := DeducibleHilbert.andElimRuleL (B := B ⋎ C) $ DeducibleHilbert.ofContext (by simp);
   have :=
-    DeducibleInt.ofProvable (X := {A ⋏ (B ⋎ C)}) $
-    ProvableInt.orElim (Λ := Λ) (A := B) (B := C) (C := A ⋏ B ⋎ A ⋏ C);
-  apply DeducibleInt.mdp (DeducibleInt.mdp (DeducibleInt.mdp this ?_) ?_) ?_;
-  . show {A ⋏ (B ⋎ C)} ⊢ᴵ[Λ] B 🡒 (A ⋏ B ⋎ A ⋏ C);
-    apply DeducibleInt.drop_ctx;
-    apply DeducibleInt.orIntroRuleL;
-    apply DeducibleInt.andIntroRule;
-    . apply DeducibleInt.of_subset_ctx (X := {A ⋏ (B ⋎ C)});
+    DeducibleHilbert.ofProvable (X := {A ⋏ (B ⋎ C)}) $
+    ProvableHilbert.orElim (𝔸 := 𝔸) (A := B) (B := C) (C := A ⋏ B ⋎ A ⋏ C);
+  apply DeducibleHilbert.mdp (DeducibleHilbert.mdp (DeducibleHilbert.mdp this ?_) ?_) ?_;
+  . show ({A ⋏ (B ⋎ C)} : Set (Formula α)) ⊢ʰ[Int;𝔸] B 🡒 (A ⋏ B ⋎ A ⋏ C);
+    apply DeducibleHilbert.drop_ctx;
+    apply DeducibleHilbert.orIntroRuleL;
+    apply DeducibleHilbert.andIntroRule;
+    . apply DeducibleHilbert.of_subset_ctx (X := {A ⋏ (B ⋎ C)});
       . tauto;
       . exact hA;
-    . apply DeducibleInt.ofContext;
+    . apply DeducibleHilbert.ofContext;
       simp;
-  . show {A ⋏ (B ⋎ C)} ⊢ᴵ[Λ] C 🡒 (A ⋏ B ⋎ A ⋏ C);
-    apply DeducibleInt.drop_ctx;
-    apply DeducibleInt.orIntroRuleR;
-    apply DeducibleInt.andIntroRule;
-    . apply DeducibleInt.of_subset_ctx (X := {A ⋏ (B ⋎ C)});
+  . show ({A ⋏ (B ⋎ C)} : Set (Formula α)) ⊢ʰ[Int;𝔸] C 🡒 (A ⋏ B ⋎ A ⋏ C);
+    apply DeducibleHilbert.drop_ctx;
+    apply DeducibleHilbert.orIntroRuleR;
+    apply DeducibleHilbert.andIntroRule;
+    . apply DeducibleHilbert.of_subset_ctx (X := {A ⋏ (B ⋎ C)});
       . tauto;
       . trivial;
-    . apply DeducibleInt.ofContext;
+    . apply DeducibleHilbert.ofContext;
       simp;
-  . exact DeducibleInt.andElimRuleR (A := A) $ DeducibleInt.ofContext (by simp);
+  . exact DeducibleHilbert.andElimRuleR (A := A) $ DeducibleHilbert.ofContext (by simp);
 
 @[simp, grind .]
-lemma dni : Λ ⊢ᴵ A 🡒 ∼∼A := by
-  apply DeducibleInt.iff_singleton_deducible_provable.mp;
-  apply DeducibleInt.drop_ctx;
-  have h₁ : {∼A, A} ⊢ᴵ[Λ] ∼A := DeducibleInt.ofContext (by simp);
-  have h₂ : {∼A, A} ⊢ᴵ[Λ] A := DeducibleInt.ofContext (by simp);
-  exact DeducibleInt.mdp h₁ h₂;
+lemma dni : ⊢ʰ[Int;𝔸] A 🡒 ∼∼A := by
+  apply DeducibleHilbert.iff_singleton_deducible_provable.mp;
+  apply DeducibleHilbert.drop_ctx;
+  have h₁ : ({∼A, A} : Set (Formula α)) ⊢ʰ[Int;𝔸] ∼A := DeducibleHilbert.ofContext (by simp);
+  have h₂ : ({∼A, A} : Set (Formula α)) ⊢ʰ[Int;𝔸] A := DeducibleHilbert.ofContext (by simp);
+  exact DeducibleHilbert.mdp h₁ h₂;
 
 @[grind <=]
-lemma dniRule : Λ ⊢ᴵ A → Λ ⊢ᴵ ∼∼A := λ h => mdp dni h
+lemma dniRule : (⊢ʰ[Int;𝔸] A) → ⊢ʰ[Int;𝔸] ∼∼A := λ h => mdp dni h
 
-end ProvableInt
+lemma ofVF {𝔸 : Axioms α} {A : Formula α} (h : ⊢ʰ[VF;𝔸] A) : ⊢ʰ[Int;𝔸] A := by induction h <;> grind;
 
-
-theorem provableInt_of_provableVF (h : Λ ⊢ⱽ A) : Λ ⊢ᴵ A := by induction h <;> grind;
+end Int.ProvableHilbert
