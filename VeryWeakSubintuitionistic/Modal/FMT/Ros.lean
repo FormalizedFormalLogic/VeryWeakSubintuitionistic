@@ -279,6 +279,133 @@ lemma lindenbaum_subset : S ⊆ (lindenbaum S S_consis).1 := lindenbaum.enum_sub
 end MaximalConsistentScopeSetNR
 
 
+noncomputable def countermodelRos (𝔸 : Axioms α) (A : Formula α) [Fact (⊬ʰ[NR;𝔸] ⊥)] : Model (MaximalConsistentScopeSetNR 𝔸 A) α where
+  Rel' B S T :=
+    match B with
+    | □C => (_ : □C ∈ scope 𝔸 A) → ⟨□C, by grind⟩ ∈ S.1.1 → ⟨C, by grind⟩ ∈ T.1.1
+    | _  => True
+  Val a S := (_ : #a ∈ scope 𝔸 A) → ⟨#a, by grind⟩ ∈ S.1.1
+  root' := MaximalConsistentScopeSetNR.lindenbaum ∅ $ by
+    suffices ⊬ʰ[NR;𝔸] ⊥ by
+      contrapose! this;
+      replace : ⊢ʰ[NR;𝔸] ∼∼⊥ := by simpa using ScopeSet.iff_inconsistentNR.mp this;
+      exact NR.ProvableHilbert.dneRule $ this;
+    apply Fact.elim inferInstance;
+
+variable [Fact (⊬ʰ[NR;𝔸] ⊥)]
+
+open MaximalConsistentScopeSetNR in
+instance : (countermodelRos 𝔸 A).Serial := by
+  constructor;
+  intro S C;
+  by_cases hC : ∃ h : □C ∈ scope 𝔸 A, ⟨□C, h⟩ ∈ S.1.1;
+  . obtain ⟨hC, hCS⟩ := hC;
+    use lindenbaum {⟨C, by grind⟩} $ by
+      suffices ⊬ʰ[NR;𝔸] ∼C by simpa [ScopeSet.ConsistentNR];
+      intro h;
+      apply S.consistent;
+      apply NR.ProvableHilbert.ctx_bot_of_provable_provable_complement (A := □C);
+      . exact iff_mem_provable.mp hCS;
+      . exact NR.ProvableHilbert.af $ NR.ProvableHilbert.ros h;
+    intro _ _;
+    apply lindenbaum_subset;
+    simp;
+  . use S;
+    intro h hmem;
+    exact absurd ⟨h, hmem⟩ hC;
+
+lemma countermodelRos.truthlemma {S : (countermodelRos 𝔸 A).World} (B : ScopeOf 𝔸 A) : B ∈ S.1.1 ↔ S ⊩ B := by
+  obtain ⟨B, hB⟩ := B;
+  induction B generalizing S with
+  | bot => grind;
+  | atom a => tauto;
+  | imp B C ihB ihC =>
+    replace ihB := @ihB S (by grind);
+    replace ihC := @ihC S (by grind);
+    constructor;
+    . intro hBC hB;
+      apply ihC.mp;
+      replace hB := ihB.mpr hB;
+      exact MaximalConsistentScopeSetNR.mem_mdp ‹_› hBC hB;
+    . intro h;
+      rcases imp_iff_not_or.mp h with hB | hC;
+      . apply MaximalConsistentScopeSetNR.imp_t ‹_› |>.mpr;
+        intro hB;
+        replace hB := ihB.mp hB;
+        contradiction;
+      . exact MaximalConsistentScopeSetNR.mem_af ‹_› $ ihC.mpr hC;
+  | box B ihB =>
+    constructor
+    · intro hbox T RST;
+      exact ihB (by grind) |>.mp $ RST hB hbox;
+    · contrapose!;
+      intro h;
+      apply notForces_box.mpr;
+      use MaximalConsistentScopeSetNR.lindenbaum {⟨B.complement, by grind⟩} $ by
+        suffices ⊬ʰ[NR;𝔸] ∼(B.complement) by simpa [ScopeSet.ConsistentNR];
+        contrapose! h;
+        apply MaximalConsistentScopeSetNR.iff_mem_provable.mpr;
+        apply NR.ProvableHilbert.af;
+        exact NR.ProvableHilbert.nec $ NR.ProvableHilbert.complementDneRule h;
+      constructor;
+      . tauto;
+      . apply ihB (by grind) |>.not.mp;
+        apply MaximalConsistentScopeSetNR.iff_mem_complement_notMem.mp;
+        apply MaximalConsistentScopeSetNR.lindenbaum_subset;
+        simp;
+
+lemma countermodelRos.valid_axioms : ∀ B ∈ 𝔸, (countermodelRos 𝔸 A) ⊨ B := by
+  intro B hB X;
+  apply countermodelRos.truthlemma (B := ⟨B, by grind⟩) |>.mp;
+  apply MaximalConsistentScopeSetNR.iff_mem_provable.mpr;
+  exact NR.ProvableHilbert.af $ NR.ProvableHilbert.axm hB;
+
+omit [Fact (⊬ʰ[NR;𝔸] ⊥)] in
+open MaximalConsistentScopeSetNR in
+theorem finite_model_property_ros : (∀ {κ : Type u}, [Finite κ] → ∀ M : Model κ α, M.Serial → (∀ B ∈ 𝔸, M ⊨ B) → M ⊨ A) → ⊢ʰ[NR;𝔸] A := by
+  contrapose;
+  intro h;
+  have : Fact (⊬ʰ[NR;𝔸] ⊥) := ⟨NR.ProvableHilbert.consistent_of_unprovable h⟩
+  push Not;
+  use (MaximalConsistentScopeSetNR 𝔸 A), inferInstance, countermodelRos 𝔸 A, inferInstance;
+  constructor;
+  . exact countermodelRos.valid_axioms;
+  . apply iff_Valid_exists_world_not_Forces.mpr;
+    use MaximalConsistentScopeSetNR.lindenbaum (𝔸 := 𝔸) (A := A) {⟨A.complement, by grind⟩} $ by
+      suffices ⊬ʰ[NR;𝔸] ∼(A.complement) by simpa [ScopeSet.ConsistentNR]
+      contrapose! h;
+      exact NR.ProvableHilbert.complementDneRule h;
+    apply countermodelRos.truthlemma (B := ⟨A, by grind⟩) |>.not.mp;
+    apply iff_mem_complement_notMem.mp;
+    apply lindenbaum_subset;
+    simp;
+
+omit [Fact (⊬ʰ[NR;𝔸] ⊥)] in
+theorem result_model_ros : List.TFAE [
+  ⊢ʰ[NR;𝔸] A,
+  ∀ {κ : Type u}, ∀ M : Model κ α, M.Serial → (∀ B ∈ 𝔸, M ⊨ B) → M ⊨ A,
+  ∀ {κ : Type u}, [Finite κ] → ∀ M : Model κ α, M.Serial → (∀ B ∈ 𝔸, M ⊨ B) → M ⊨ A
+] := by
+  tfae_have 1 → 2 := by intro h _ M hS hM; haveI := hS; exact soundness_model_ros hM h;
+  tfae_have 2 → 3 := by grind;
+  tfae_have 3 → 1 := finite_model_property_ros;
+  tfae_finish;
+
+theorem NR_completeness {A : Formula α} : List.TFAE [
+  ⊢ʰ[NR;∅] A,
+  ∀ {κ : Type u}, ∀ F : Frame κ α, F.Serial → F ⊨ A,
+  ∀ {κ : Type u}, [Finite κ] → ∀ F : Frame κ α, F.Serial → F ⊨ A
+] := by
+  tfae_have 1 → 2 := by intro h _ F hS; haveI := hS; exact soundness_frame_ros (by simp) h;
+  tfae_have 2 → 3 := by grind;
+  tfae_have 3 → 1 := by
+    intro h;
+    apply finite_model_property_ros (𝔸 := ∅);
+    intro κ _ M hS _;
+    haveI := hS;
+    exact h M.toFrame inferInstance M.Val;
+  tfae_finish;
+
 end FMT
 
 end Modal
