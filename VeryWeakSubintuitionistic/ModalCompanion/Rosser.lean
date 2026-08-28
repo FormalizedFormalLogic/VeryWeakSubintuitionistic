@@ -71,6 +71,37 @@ lemma provableNR_star_of_provableVFR
     exact hValid _ hMem y';
   exact modalToProp_notForces_closed_of_neg hCClosed hValC hzC;
 
+lemma provableVFR_of_provableNR_star
+  [Fact (∀ B ∈ 𝔸, B.IsClosedNegativeAxiom)]
+  : (⊢ʰ[NR;𝔸.star] A.corsi) → ⊢ʰ[VFR;𝔸] A := by
+  have hCNA : ∀ B ∈ 𝔸, B.IsClosedNegativeAxiom := Fact.out;
+  contrapose;
+  intro h;
+  replace h := FMTSemantics.result_frame_ros (𝔸 := 𝔸) (by grind) |>.not.out 0 1 |>.mp h;
+  push Not at h;
+  obtain ⟨κ, PF, hRos, hPF, h⟩ := h;
+  obtain ⟨PV, x, hx⟩ := FMTSemantics.iff_notFrameValid_exists_model_world.mp h;
+  haveI : FMTSemantics.Frame.Rosser ((⟨PF, PV⟩ : FMTSemantics.Model κ α).toFrame) := hRos;
+  apply Modal.FMT.result_model_ros.not.out 0 1 |>.mpr;
+  push Not;
+  refine ⟨κ, propToModalModel ⟨PF, PV⟩, propToModalModel_serial, ?_, ?_⟩;
+  . intro B hB;
+    obtain ⟨C, hC₁, hC₂⟩ := Finset.mem_filterMap _ |>.mp hB;
+    split at hC₂;
+    . simp only [Option.some.injEq] at hC₂;
+      subst hC₂;
+      rename_i C;
+      obtain ⟨D, _, _, _⟩ := Formula.iff_isCNA.mp $ hCNA (∼C) ‹_›;
+      intro y;
+      apply Modal.FMT.forces_not.mpr;
+      apply propToModal_truthlemma.not.mp;
+      exact FMTSemantics.iff_FrameForces_Forces_of_closed (by grind) |>.not.mp
+        $ FMTSemantics.iff_FrameValid_neg_of_closed (by grind) |>.mp (hPF _ hC₁) y;
+    . contradiction;
+  . replace hx := propToModal_truthlemma.not.mp hx;
+    apply Modal.FMT.iff_Valid_exists_world_not_Forces.mpr;
+    use x;
+
 end
 
 end
