@@ -46,4 +46,31 @@ lemma modalToPropModel_rosser [MM.Serial] : (modalToPropModel MM).Rosser := by
 
 end ModalToProp
 
+
+section
+
+variable [DecidableEq α] {𝔸 : Axioms α} {A : Formula α}
+
+lemma provableNR_star_of_provableVFR
+  [Fact (∀ B ∈ 𝔸, B.IsClosedNegativeAxiom)]
+  : (⊢ʰ[VFR;𝔸] A) → (⊢ʰ[NR;𝔸.star] A.corsi) := by
+  have hCNA : ∀ B ∈ 𝔸, B.IsClosedNegativeAxiom := Fact.out;
+  intro h;
+  apply Modal.FMT.finite_model_property_ros;
+  intro κ _ MM hSer hValid x;
+  haveI := hSer;
+  haveI := modalToPropModel_rosser (MM := MM);
+  apply (modalToProp_truthlemma).mpr;
+  apply FMTSemantics.soundness_model_ros ?_ h;
+  intro B hB;
+  obtain ⟨C, rfl, hCClosed, _⟩ := Formula.iff_isCNA.mp (hCNA B hB);
+  intro y z Ryz hzC;
+  have hValC : ∀ y, ¬ Modal.FMT.Forced (M := MM) y (C.corsi) := by
+    intro y';
+    have hMem : ∼(C.corsi) ∈ 𝔸.star := Axioms.mem_star_of_mem_neg hB;
+    exact hValid _ hMem y';
+  exact modalToProp_notForces_closed_of_neg hCClosed hValC hzC;
+
+end
+
 end
