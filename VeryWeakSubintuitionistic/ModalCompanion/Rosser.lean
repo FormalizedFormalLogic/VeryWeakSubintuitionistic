@@ -71,6 +71,11 @@ lemma provableNR_star_of_provableVFR
     exact hValid _ hMem y';
   exact modalToProp_notForces_closed_of_neg hCClosed hValC hzC;
 
+lemma provableNR_star_repeatNeg_of_provableNR_star {N : Finset ℕ}
+  : ⊢ʰ[NR;𝔸.star] A.corsi → ⊢ʰ[NR;𝔸.star ∪ N.image (λ n => ∼□(∼^[2 * n]⊥))] A.corsi := by
+  apply Modal.NR.ProvableHilbert.ofSubsetAxm;
+  grind;
+
 lemma provableVFR_of_provableNR_star
   [Fact (∀ B ∈ 𝔸, B.IsClosedNegativeAxiom)]
   : (⊢ʰ[NR;𝔸.star] A.corsi) → ⊢ʰ[VFR;𝔸] A := by
