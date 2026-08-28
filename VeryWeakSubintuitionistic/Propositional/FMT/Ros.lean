@@ -11,27 +11,33 @@ section Soundness
 
 variable {κ α : Type*} {F : Frame κ α} {M : Model κ α} {𝔸 : Axioms α} {A B C : Formula α}
 
-class Frame.Rosser (F : Frame κ α) : Prop where
+namespace Frame
+
+class Rosser (F : Frame κ α) : Prop where
   ros : ∀ (x : F.World) (A B : Formula α), ∃ y : F.World, x ≺[A 🡒 B] y
+export Rosser (ros)
+
+end Frame
+
 
 @[grind <=]
 lemma frameValid_ros [F.Rosser] (hA : F ⊨ ∼A) (hB : F ⊨ B) : F ⊨ ∼(B 🡒 A) := by
   intro V x y Rxy hBA;
-  obtain ⟨z, Ryz⟩ := Frame.Rosser.ros y B A;
+  obtain ⟨z, Ryz⟩ := Frame.ros y B A;
   apply hA V F.root z (by grind);
   exact hBA z Ryz (hB V z);
 
 @[grind <=]
-lemma modelValid_ros [M.toFrame.Rosser] (hA : M ⊨ ∼A) (hB : M ⊨ B) : M ⊨ ∼(B 🡒 A) := by
+lemma modelValid_ros [M.Rosser] (hA : M ⊨ ∼A) (hB : M ⊨ B) : M ⊨ ∼(B 🡒 A) := by
   intro x y Rxy hBA;
-  obtain ⟨z, Ryz⟩ := Frame.Rosser.ros (F := M.toFrame) y B A;
+  obtain ⟨z, Ryz⟩ := Frame.ros (F := M.toFrame) y B A;
   apply hA M.root z (by grind);
   exact hBA z Ryz (hB z);
 
 theorem soundness_frame_ros [F.Rosser] (h𝔸 : ∀ B ∈ 𝔸, F ⊨ B) : (⊢ʰ[VFR;𝔸] A) → F ⊨ A := by
   intro h; induction h <;> grind;
 
-theorem soundness_model_ros [M.toFrame.Rosser] (h𝔸 : ∀ B ∈ 𝔸, M ⊨ B) : (⊢ʰ[VFR;𝔸] A) → M ⊨ A := by
+theorem soundness_model_ros [M.Rosser] (h𝔸 : ∀ B ∈ 𝔸, M ⊨ B) : (⊢ʰ[VFR;𝔸] A) → M ⊨ A := by
   intro h; induction h <;> grind;
 
 end Soundness
@@ -357,10 +363,10 @@ lemma countermodelRos.exists_succ {T : (countermodelRos 𝔸 A).World} {C D : Fo
           simp;
   . exact ⟨T, by intro h; exact absurd h hCD⟩;
 
-instance countermodelRos.rosser : (countermodelRos 𝔸 A).toFrame.Rosser := ⟨λ _ _ _ => countermodelRos.exists_succ⟩
+instance countermodelRos.rosser : (countermodelRos 𝔸 A).Rosser := ⟨λ _ _ _ => countermodelRos.exists_succ⟩
 
 theorem finite_model_property_ros
-  : (∀ {κ : Type u}, [Finite κ] → ∀ M : Model κ α, M.toFrame.Rosser → (∀ B ∈ 𝔸, M ⊨ B) → M ⊨ A) → ⊢ʰ[VFR;𝔸] A := by
+  : (∀ {κ : Type u}, [Finite κ] → ∀ M : Model κ α, M.Rosser → (∀ B ∈ 𝔸, M ⊨ B) → M ⊨ A) → ⊢ʰ[VFR;𝔸] A := by
   contrapose;
   intro h;
   push Not;
@@ -388,8 +394,8 @@ theorem finite_frame_property_ros (h_closed : ∀ B ∈ 𝔸, B.Closed)
 
 theorem result_model_ros : List.TFAE [
   ⊢ʰ[VFR;𝔸] A,
-  ∀ {κ : Type u}, ∀ M : Model κ α, M.toFrame.Rosser → (∀ B ∈ 𝔸, M ⊨ B) → M ⊨ A,
-  ∀ {κ : Type u}, [Finite κ] → ∀ M : Model κ α, M.toFrame.Rosser → (∀ B ∈ 𝔸, M ⊨ B) → M ⊨ A
+  ∀ {κ : Type u}, ∀ M : Model κ α, M.Rosser → (∀ B ∈ 𝔸, M ⊨ B) → M ⊨ A,
+  ∀ {κ : Type u}, [Finite κ] → ∀ M : Model κ α, M.Rosser → (∀ B ∈ 𝔸, M ⊨ B) → M ⊨ A
 ] := by
   tfae_have 1 → 2 := by intro h _ M hR hM; haveI := hR; exact soundness_model_ros hM h;
   tfae_have 2 → 3 := by grind;
