@@ -1,9 +1,21 @@
-name: Lean Action CI
+name: CI
 
 on:
   push:
+    branches:
+      - main
   pull_request:
+  merge_group:
+    branches:
+      - main
   workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+permissions:
+  contents: read
 
 jobs:
   build:
@@ -11,3 +23,54 @@ jobs:
     steps:
       - uses: actions/checkout@v5
       - uses: leanprover/lean-action@v1
+        with:
+          build: false
+          use-github-cache: false
+
+      - name: Restore project cache
+        id: cache-restore
+        uses: actions/cache/restore@v4
+        with:
+          path: .lake/VF-x86_64-unknown-linux-gnu.tar.gz
+          key: lake-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}-${{ github.sha }}
+          restore-keys: |
+            lake-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('lean-toolchain', 'lake-manifest.json') }}
+      - name: Unpack project cache
+        if: hashFiles('.lake/VF-x86_64-unknown-linux-gnu.tar.gz') != ''
+        run: lake unpack
+
+      # `leanchecker` walks every olean it finds, and a restored cache can predate a rename or a
+      # deletion, so drop artifacts whose module no longer has a source file.
+      - name: Prune orphaned build artifacts
+        run: |
+          python3 - <<'PY'
+          import pathlib
+          src_root = pathlib.Path('VeryWeakSubintuitionistic')
+          for build_root in [pathlib.Path('.lake/build/lib/lean/VeryWeakSubintuitionistic'), pathlib.Path('.lake/build/ir/VeryWeakSubintuitionistic')]:
+              if not build_root.exists():
+                  continue
+              for f in sorted(build_root.rglob('*')):
+                  if not f.is_file():
+                      continue
+                  rel_dir = f.relative_to(build_root).parent
+                  base = f.name.split('.', 1)[0]
+                  if not (src_root / rel_dir / f'{base}.lean').exists():
+                      print(f'removing orphaned artifact {f}')
+                      f.unlink()
+          PY
+
+      - name: Build VeryWeakSubintuitionistic
+        run: lake build VeryWeakSubintuitionistic
+
+      - name: Check environment with leanchecker
+        run: lake env leanchecker VeryWeakSubintuitionistic
+
+      - name: Pack project cache
+        run: lake pack
+      - name: Save project cache
+        if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+        id: cache-save
+        uses: actions/cache/save@v4
+        with:
+          path: .lake/VF-x86_64-unknown-linux-gnu.tar.gz
+          key: ${{ steps.cache-restore.outputs.cache-primary-key }}
