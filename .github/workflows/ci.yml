@@ -62,6 +62,13 @@ jobs:
       - name: Build VeryWeakSubintuitionistic
         run: lake build VeryWeakSubintuitionistic
 
+      - name: Add swap for leanchecker
+        run: |
+          sudo fallocate -l 24G /swapfile
+          sudo chmod 600 /swapfile
+          sudo mkswap /swapfile
+          sudo swapon /swapfile
+
       - name: Check environment with leanchecker
         run: |
           free -h
