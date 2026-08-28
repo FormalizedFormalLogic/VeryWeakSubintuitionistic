@@ -328,12 +328,14 @@ lemma countermodelRos.valid_axioms : ∀ B ∈ 𝔸, (countermodelRos 𝔸 A) �
   intro B hB T;
   exact countermodelRos.truthlemma _ |>.mp $ T.mem_ant_of_provable (B := ⟨B, mem_scope_of_mem_axioms hB⟩) (axm hB);
 
-lemma countermodelRos.exists_succ {T : (countermodelRos 𝔸 A).World} {C D : Formula α}
-  : ∃ y : (countermodelRos 𝔸 A).World, T ≺[C 🡒 D] y := by
+instance : (countermodelRos 𝔸 A).Rosser := by
+  constructor;
+  intro T C D;
   by_cases hCD : (C 🡒 D) ∈ scope 𝔸 A;
   . obtain ⟨hCs, hDs⟩ := mem_scope_of_mem_imp_scope hCD;
     by_cases hTcon : (⟨C 🡒 D, hCD⟩ : ScopeOf 𝔸 A) ∈ T.con;
-    . exact ⟨T, by intro _; left; exact hTcon⟩;
+    . use T;
+      tauto;
     . by_cases hC : ⊢ʰ[VFR;𝔸] C;
       . by_cases hD : ⊢ʰ[VFR;𝔸] ∼D;
         . exfalso;
@@ -352,25 +354,24 @@ lemma countermodelRos.exists_succ {T : (countermodelRos 𝔸 A).World} {C D : Fo
             apply lindenbaum_subset_ant;
             simp;
       . refine ⟨lindenbaum ⟨∅, {⟨C, hCs⟩}⟩ ?_, ?_⟩;
-        . by_contra hc;
-          apply hC;
-          replace hc : ⊢ʰ[VFR;𝔸] ⊤ 🡒 C := by simpa using Tableau.iff_inconsistentVFR.mp hc;
+        . contrapose! hC;
+          replace hc : ⊢ʰ[VFR;𝔸] ⊤ 🡒 C := by simpa using Tableau.iff_inconsistentVFR.mp hC;
           exact mdp hc verum;
         . intro _;
           right;
           left;
           apply lindenbaum_subset_con;
           simp;
-  . exact ⟨T, by intro h; exact absurd h hCD⟩;
-
-instance countermodelRos.rosser : (countermodelRos 𝔸 A).Rosser := ⟨λ _ _ _ => countermodelRos.exists_succ⟩
+  . use T;
+    intro h;
+    contradiction;
 
 theorem finite_model_property_ros
   : (∀ {κ : Type u}, [Finite κ] → ∀ M : Model κ α, M.Rosser → (∀ B ∈ 𝔸, M ⊨ B) → M ⊨ A) → ⊢ʰ[VFR;𝔸] A := by
   contrapose;
   intro h;
   push Not;
-  use (SaturatedConsistentTableauVFR 𝔸 A), inferInstance, countermodelRos 𝔸 A, countermodelRos.rosser;
+  use (SaturatedConsistentTableauVFR 𝔸 A), inferInstance, countermodelRos 𝔸 A, inferInstance;
   constructor;
   . exact countermodelRos.valid_axioms;
   . apply iff_Valid_exists_world_not_Forces.mpr;
