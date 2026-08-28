@@ -62,29 +62,8 @@ jobs:
       - name: Build VeryWeakSubintuitionistic
         run: lake build VeryWeakSubintuitionistic
 
-      - name: Add swap for leanchecker
-        run: |
-          sudo fallocate -l 24G /mnt/leanchecker-swap
-          sudo chmod 600 /mnt/leanchecker-swap
-          sudo mkswap /mnt/leanchecker-swap
-          sudo swapon /mnt/leanchecker-swap
-
       - name: Check environment with leanchecker
-        run: |
-          free -h
-          df -h /
-          (while :; do
-             echo "[monitor] $(date -u +%H:%M:%S) mem=$(free -m | awk '/^Mem:/{print $3"/"$2"MB"}') swap=$(free -m | awk '/^Swap:/{print $3"/"$2"MB"}') disk=$(df -m / | awk 'NR==2{print $4"MB free"}')"
-             sleep 5
-           done) &
-          monitor=$!
-          set +e
-          lake env leanchecker VeryWeakSubintuitionistic
-          status=$?
-          set -e
-          kill "$monitor" 2>/dev/null || true
-          echo "[monitor] leanchecker exited with $status"
-          exit "$status"
+        run: lake env leanchecker VeryWeakSubintuitionistic
 
       - name: Pack project cache
         run: lake pack
