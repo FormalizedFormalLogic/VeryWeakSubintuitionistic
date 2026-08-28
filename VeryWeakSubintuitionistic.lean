@@ -8,6 +8,7 @@ public import VeryWeakSubintuitionistic.Modal.Proof.N
 public import VeryWeakSubintuitionistic.Modal.Proof.NR
 public import VeryWeakSubintuitionistic.Modal.Syntax
 public import VeryWeakSubintuitionistic.ModalCompanion.Basic
+public import VeryWeakSubintuitionistic.ModalCompanion.Rosser
 public import VeryWeakSubintuitionistic.Propositional.FMT.Basic
 public import VeryWeakSubintuitionistic.Propositional.FMT.Completeness
 public import VeryWeakSubintuitionistic.Propositional.FMT.Ros
