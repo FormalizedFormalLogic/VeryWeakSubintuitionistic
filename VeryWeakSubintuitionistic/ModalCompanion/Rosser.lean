@@ -30,4 +30,20 @@ lemma propToModalModel_serial [PM.Rosser] : (propToModalModel PM).Serial := by
 
 end PropToModal
 
+
+section ModalToProp
+
+variable {κ : Type*} {MM : Modal.FMT.Model κ α}
+
+lemma modalToPropModel_rosser [MM.Serial] : (modalToPropModel MM).Rosser := by
+  constructor;
+  intro x A B;
+  match x with
+  | .inr () => exact ⟨.inr (), trivial⟩;
+  | .inl x =>
+    obtain ⟨y, Rxy⟩ := Modal.FMT.Frame.serial (F := MM.toFrame) x ((A.corsi) 🡒 (B.corsi));
+    exact ⟨.inl y, Rxy⟩;
+
+end ModalToProp
+
 end
