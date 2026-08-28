@@ -102,6 +102,14 @@ lemma provableVFR_of_provableNR_star
     apply Modal.FMT.iff_Valid_exists_world_not_Forces.mpr;
     use x;
 
+theorem modal_companion_ros [Fact (∀ B ∈ 𝔸, B.IsClosedNegativeAxiom)]
+  : (⊢ʰ[VFR;𝔸] A) ↔ (⊢ʰ[NR;𝔸.star] A.corsi) :=
+  ⟨provableNR_star_of_provableVFR, provableVFR_of_provableNR_star⟩
+
+theorem modal_companion_VFR : (⊢ʰ[VFR;∅] A) ↔ (⊢ʰ[NR;∅] A.corsi) := by
+  have : Fact (∀ B ∈ (∅ : Axioms α), B.IsClosedNegativeAxiom) := ⟨by grind⟩;
+  simpa [Axioms.star] using modal_companion_ros (𝔸 := ∅) (A := A);
+
 end
 
 end
