@@ -2,6 +2,11 @@ module
 
 public import VeryWeakSubintuitionistic.Propositional.FMT.Basic
 public import VeryWeakSubintuitionistic.Propositional.Slash
+public import Mathlib.Data.Finset.Powerset
+public import Mathlib.Data.Fintype.Sets
+public import Mathlib.Data.Finite.Prod
+public import Mathlib.Data.Fintype.EquivFin
+public import Mathlib.Tactic.TFAE
 
 @[expose] public section
 

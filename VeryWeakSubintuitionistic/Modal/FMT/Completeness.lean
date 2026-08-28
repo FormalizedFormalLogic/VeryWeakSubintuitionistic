@@ -1,6 +1,12 @@
 module
 
 public import VeryWeakSubintuitionistic.Modal.FMT.Basic
+public import Mathlib.Data.Finset.Union
+public import Mathlib.Data.Fintype.Sets
+public import Mathlib.Data.Finite.Prod
+public import Mathlib.Data.Fintype.Powerset
+public import Mathlib.Data.Fintype.EquivFin
+public import Mathlib.Tactic.TFAE
 
 @[expose] public section
 

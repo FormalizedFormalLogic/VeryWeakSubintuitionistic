@@ -1,6 +1,6 @@
 module
 
-public import Mathlib
+public import Mathlib.Data.Finset.Basic
 
 @[expose] public section
 
