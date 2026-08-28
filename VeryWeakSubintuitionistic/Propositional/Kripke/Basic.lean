@@ -125,7 +125,7 @@ lemma valid_implyS [M.Int] : M ⊨ (A 🡒 B 🡒 C) 🡒 (A 🡒 B) 🡒 (A �
 @[grind .] lemma valid_efq [M.Int] : M ⊨ ⊥ 🡒 A := by grind;
 @[grind =>] lemma valid_mdp [M.Int] (hAB : M ⊨ A 🡒 B) (hA : M ⊨ A) : M ⊨ B := by intro x; exact hAB x x (by simp) (hA x);
 
-theorem soundness : (Λ ⊢ᴵ A) → (∀ {κ}, ∀ M : Model κ α, [M.Int] → (∀ φ ∈ Λ, M ⊨ φ) → M ⊨ A) := by intro h; induction h <;> grind;
+theorem soundness : (⊢ʰ[Int;𝔸] A) → (∀ {κ}, ∀ M : Model κ α, [M.Int] → (∀ φ ∈ 𝔸, M ⊨ φ) → M ⊨ A) := by intro h; induction h <;> grind;
 
 end Soundness
 
@@ -133,7 +133,7 @@ end KripkeSemantics
 
 
 @[simp, grind .]
-theorem consistency_of_Int : (∅ ⊬ᴵ (⊥ : Formula α)) := by
+theorem consistency_of_Int : (⊬ʰ[Int;∅] (⊥ : Formula α)) := by
   by_contra! hC;
   let M : KripkeSemantics.Model (Fin 1) α := {
     Rel' := λ _ _ => True,

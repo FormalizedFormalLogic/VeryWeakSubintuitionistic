@@ -139,16 +139,16 @@ variable {α : Type u} [DecidableEq α]
 
 namespace Axioms
 
-def star (Λ : Axioms α) := Λ.filterMap (λ A => match A with | ∼B => some (∼(B.corsi)) | _  => none) $ by
+def star (𝔸 : Axioms α) := 𝔸.filterMap (λ A => match A with | ∼B => some (∼(B.corsi)) | _  => none) $ by
   intro B C;
   cases B using Formula.cases_neg <;> cases C using Formula.cases_neg;
   case neg.neg => grind [Formula.corsi_injective]
   all_goals grind;
 
-variable {Λ : Axioms α}
+variable {𝔸 : Axioms α}
 
 omit [DecidableEq α] in
-lemma mem_star_of_mem_neg {B : Formula α} (hB : ∼B ∈ Λ) : ∼(B.corsi) ∈ star Λ := by
+lemma mem_star_of_mem_neg {B : Formula α} (hB : ∼B ∈ 𝔸) : ∼(B.corsi) ∈ star 𝔸 := by
   apply Finset.mem_filterMap _ |>.mpr;
   use ∼B;
 
@@ -216,38 +216,38 @@ end Modal.FMT
 
 section
 
-variable {Λ : Axioms α} {A : Formula α}
+variable {𝔸 : Axioms α} {A : Formula α}
 
 lemma provableN_star_of_provableVF
-  [Fact (∀ B ∈ Λ, B.IsClosedNegativeAxiom)]
-  : (Λ ⊢ⱽ A) → (Λ.star ⊢ᴺ A.corsi) := by
-  have hCNA : ∀ B ∈ Λ, B.IsClosedNegativeAxiom := Fact.out;
+  [Fact (∀ B ∈ 𝔸, B.IsClosedNegativeAxiom)]
+  : (⊢ʰ[VF;𝔸] A) → (⊢ʰ[N;𝔸.star] A.corsi) := by
+  have hCNA : ∀ B ∈ 𝔸, B.IsClosedNegativeAxiom := Fact.out;
   intro h;
   apply Modal.FMT.finite_model_property;
   intro κ _ MM hValid x;
   apply (modalToProp_truthlemma).mpr;
   apply FMTSemantics.soundness_model h (modalToPropModel MM);
   intro B hB;
-  obtain ⟨C, rfl, hCClosed, _⟩ := Formula.iff_isCNA.mp (Fact.elim (p := ∀ B ∈ Λ, B.IsClosedNegativeAxiom) inferInstance B hB);
+  obtain ⟨C, rfl, hCClosed, _⟩ := Formula.iff_isCNA.mp (Fact.elim (p := ∀ B ∈ 𝔸, B.IsClosedNegativeAxiom) inferInstance B hB);
   intro y z Ryz hzC;
   have hValC : ∀ y, ¬ Modal.FMT.Forced (M := MM) y (C.corsi) := by
     intro y';
-    have hMem : ∼(C.corsi) ∈ Λ.star := Axioms.mem_star_of_mem_neg hB;
+    have hMem : ∼(C.corsi) ∈ 𝔸.star := Axioms.mem_star_of_mem_neg hB;
     exact hValid _ hMem y';
   exact modalToProp_notForces_closed_of_neg hCClosed hValC hzC;
 
-lemma provableN_star_repeatNeg_of_provableN_star {N : Finset ℕ} : Λ.star ⊢ᴺ A.corsi → (Λ.star ∪ N.image (λ n => ∼□∼^[2 * n]⊥)) ⊢ᴺ A.corsi := by
-  apply Modal.ProvableN.ofSubsetAxm;
+lemma provableN_star_repeatNeg_of_provableN_star {N : Finset ℕ} : ⊢ʰ[N;𝔸.star] A.corsi → ⊢ʰ[N;𝔸.star ∪ N.image (λ n => ∼□∼^[2 * n]⊥)] A.corsi := by
+  apply Modal.N.ProvableHilbert.ofSubsetAxm;
   grind;
 
 lemma provableVF_of_provableN_star_repeatNeg
   {N : Finset ℕ}
-  [Fact (∀ B ∈ Λ, B.IsClosedNegativeAxiom)]
-  : (Λ.star ∪ N.image (λ n => ∼□(∼^[2 * n]⊥))) ⊢ᴺ A.corsi → Λ ⊢ⱽ A := by
-  have hCNA : ∀ B ∈ Λ, B.IsClosedNegativeAxiom := Fact.out;
+  [Fact (∀ B ∈ 𝔸, B.IsClosedNegativeAxiom)]
+  : ⊢ʰ[N;𝔸.star ∪ N.image (λ n => ∼□(∼^[2 * n]⊥))] A.corsi → ⊢ʰ[VF;𝔸] A := by
+  have hCNA : ∀ B ∈ 𝔸, B.IsClosedNegativeAxiom := Fact.out;
   contrapose;
   intro h;
-  replace h := FMTSemantics.result_frame (Λ := Λ) (by grind) |>.not.out 0 1 |>.mp h;
+  replace h := FMTSemantics.result_frame (𝔸 := 𝔸) (by grind) |>.not.out 0 1 |>.mp h;
   push Not at h;
   obtain ⟨_, PF, hPF, h⟩ := h;
   obtain ⟨PV, x, hx⟩ := FMTSemantics.iff_notFrameValid_exists_model_world.mp h;
@@ -282,10 +282,10 @@ lemma provableVF_of_provableN_star_repeatNeg
     use x;
 
 /-- Theorem 6.11 -/
-theorem modal_companion [Fact (∀ B ∈ Λ, B.IsClosedNegativeAxiom)] {A : Formula α} {N : Finset ℕ} : List.TFAE [
-  Λ ⊢ⱽ A,
-  Λ.star ⊢ᴺ A.corsi,
-  (Λ.star ∪ N.image (λ n => ∼□(∼^[2 * n]⊥))) ⊢ᴺ A.corsi
+theorem modal_companion [Fact (∀ B ∈ 𝔸, B.IsClosedNegativeAxiom)] {A : Formula α} {N : Finset ℕ} : List.TFAE [
+  ⊢ʰ[VF;𝔸] A,
+  ⊢ʰ[N;𝔸.star] A.corsi,
+  ⊢ʰ[N;𝔸.star ∪ N.image (λ n => ∼□(∼^[2 * n]⊥))] A.corsi
 ] := by
   tfae_have 1 → 2 := provableN_star_of_provableVF;
   tfae_have 2 → 3 := provableN_star_repeatNeg_of_provableN_star;
@@ -295,12 +295,12 @@ theorem modal_companion [Fact (∀ B ∈ Λ, B.IsClosedNegativeAxiom)] {A : Form
 
 /-- Corollary 6.12 -/
 theorem modal_companion_VF {A : Formula α} {N : Finset ℕ} : List.TFAE [
-  ∅ ⊢ⱽ A,
-  ∅ ⊢ᴺ A.corsi,
-  (N.image (λ n => ∼□(∼^[2 * n]⊥))) ⊢ᴺ A.corsi
+  ⊢ʰ[VF;∅] A,
+  ⊢ʰ[N;∅] A.corsi,
+  ⊢ʰ[N;N.image (λ n => ∼□(∼^[2 * n]⊥))] A.corsi
 ] := by
   have : Fact (∀ B ∈ (∅ : Axioms α), B.IsClosedNegativeAxiom) := ⟨by grind⟩;
-  simpa [Axioms.star] using modal_companion (Λ := ∅);
+  simpa [Axioms.star] using modal_companion (𝔸 := ∅);
 
 omit [DecidableEq α] in
 private lemma star_singleton_dni : ({ (∼∼⊤ : Formula α) } : Axioms α).star = { (∼□∼□⊤ : Modal.Formula α) } := by
@@ -309,12 +309,12 @@ private lemma star_singleton_dni : ({ (∼∼⊤ : Formula α) } : Axioms α).st
 
 /-- Corollary 6.13 -/
 theorem modal_companion_VFSer {A : Formula α} {N : Finset ℕ} : List.TFAE [
-  ({(∼∼⊤ : Formula α)}) ⊢ⱽ A,
-  ({(∼□∼□⊤ : Modal.Formula α)}) ⊢ᴺ A.corsi,
-  (insert (∼□∼□⊤ : Modal.Formula α) (N.image (λ n => ∼□(∼^[2 * n]⊥)))) ⊢ᴺ A.corsi
+  ⊢ʰ[VF;({(∼∼⊤ : Formula α)})] A,
+  ⊢ʰ[N;({(∼□∼□⊤ : Modal.Formula α)})] A.corsi,
+  ⊢ʰ[N;insert (∼□∼□⊤ : Modal.Formula α) (N.image (λ n => ∼□(∼^[2 * n]⊥)))] A.corsi
 ] := by
   have : Fact (∀ B ∈ ({ (∼∼⊤ : Formula α) } : Axioms α), B.IsClosedNegativeAxiom) := ⟨by grind⟩;
-  simpa [star_singleton_dni, Finset.singleton_union] using modal_companion (Λ := { (∼∼⊤ : Formula α) });
+  simpa [star_singleton_dni, Finset.singleton_union] using modal_companion (𝔸 := { (∼∼⊤ : Formula α) });
 
 
 end

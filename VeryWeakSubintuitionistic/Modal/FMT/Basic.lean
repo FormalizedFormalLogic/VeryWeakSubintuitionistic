@@ -101,10 +101,10 @@ lemma frameValid_orElim : F ⊨ (A ⋎ B) 🡒 (A 🡒 C) 🡒 (B 🡒 C) 🡒 C
 @[grind <=] lemma modelValid_nec (hA : M ⊨ A) : M ⊨ □A := by intro x y Rxy; exact hA y;
 
 
-theorem soundness_frame : (Λ ⊢ᴺ A) → (∀ {κ}, ∀ F : Frame κ α, (∀ B ∈ Λ, F ⊨ B) → F ⊨ A) := by
-  intro h _ F hΛ; induction h <;> grind;
+theorem soundness_frame : (⊢ʰ[N;𝔸] A) → (∀ {κ}, ∀ F : Frame κ α, (∀ B ∈ 𝔸, F ⊨ B) → F ⊨ A) := by
+  intro h _ F h𝔸; induction h <;> grind;
 
-theorem soundness_model : (Λ ⊢ᴺ A) → (∀ {κ}, ∀ M : Model κ α, (∀ B ∈ Λ, M ⊨ B) → M ⊨ A) := by
+theorem soundness_model : (⊢ʰ[N;𝔸] A) → (∀ {κ}, ∀ M : Model κ α, (∀ B ∈ 𝔸, M ⊨ B) → M ⊨ A) := by
   intro h _ M hM; induction h <;> grind;
 
 
@@ -114,7 +114,7 @@ lemma frameInvalid_bot : F ⊭ ⊥ := by
   exact @h (λ _ _ => True) F.root;
 
 @[simp, grind .]
-theorem consistency_of_N : (∅ ⊬ᴺ (⊥ : Formula α)) := by
+theorem consistency_of_N : (⊬ʰ[N;∅] (⊥ : Formula α)) := by
   by_contra!;
   let F : Frame (Fin 1) α := ⟨λ _ _ _ => True, 0⟩;
   exact frameInvalid_bot $ soundness_frame this F (by grind);

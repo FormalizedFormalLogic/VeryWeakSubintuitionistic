@@ -8,33 +8,36 @@ namespace Modal
 
 variable {α : Type*}
 
-inductive ProofN (Λ : Axioms α) : Formula α → Type _
-| axm {A}        : A ∈ Λ → ProofN Λ A
-| implyK {A B}   : ProofN Λ $ A 🡒 B 🡒 A
-| implyS {A B C} : ProofN Λ $ (A 🡒 B 🡒 C) 🡒 (A 🡒 B) 🡒 (A 🡒 C)
-| efq {A}        : ProofN Λ $ ⊥ 🡒 A
-| dne {A}        : ProofN Λ $ ∼∼A 🡒 A
-| andElimL {A B} : ProofN Λ $ (A ⋏ B) 🡒 A
-| andElimR {A B} : ProofN Λ $ (A ⋏ B) 🡒 B
-| andIntro {A B} : ProofN Λ $ A 🡒 B 🡒 (A ⋏ B)
-| orElim {A B C} : ProofN Λ $ A ⋎ B 🡒 (A 🡒 C) 🡒 (B 🡒 C) 🡒 C
-| mdp {A B}      : ProofN Λ (A 🡒 B) → ProofN Λ A → ProofN Λ B
-| nec {A}        : ProofN Λ A → ProofN Λ (□A)
-infix:25 " ⊢ᴺ! " => ProofN
+namespace N
 
-namespace ProofN
+inductive ProofHilbert (𝔸 : Axioms α) : Formula α → Type _
+| axm {A}        : A ∈ 𝔸 → ProofHilbert 𝔸 A
+| implyK {A B}   : ProofHilbert 𝔸 $ A 🡒 B 🡒 A
+| implyS {A B C} : ProofHilbert 𝔸 $ (A 🡒 B 🡒 C) 🡒 (A 🡒 B) 🡒 (A 🡒 C)
+| efq {A}        : ProofHilbert 𝔸 $ ⊥ 🡒 A
+| dne {A}        : ProofHilbert 𝔸 $ ∼∼A 🡒 A
+| andElimL {A B} : ProofHilbert 𝔸 $ (A ⋏ B) 🡒 A
+| andElimR {A B} : ProofHilbert 𝔸 $ (A ⋏ B) 🡒 B
+| andIntro {A B} : ProofHilbert 𝔸 $ A 🡒 B 🡒 (A ⋏ B)
+| orElim {A B C} : ProofHilbert 𝔸 $ A ⋎ B 🡒 (A 🡒 C) 🡒 (B 🡒 C) 🡒 C
+| mdp {A B}      : ProofHilbert 𝔸 (A 🡒 B) → ProofHilbert 𝔸 A → ProofHilbert 𝔸 B
+| nec {A}        : ProofHilbert 𝔸 A → ProofHilbert 𝔸 (□A)
 
-variable {Λ Λ₁ Λ₂ : Axioms α} {A B C : Formula α}
+notation:50 "⊢ʰ![N;" 𝔸 "] " A:51 => Modal.N.ProofHilbert 𝔸 A
 
-def af {A B} : Λ ⊢ᴺ! A → Λ ⊢ᴺ! (B 🡒 A) := λ h => mdp implyK h
+namespace ProofHilbert
 
-def impId : Λ ⊢ᴺ! A 🡒 A := by
-  haveI : Λ ⊢ᴺ! (A 🡒 (A 🡒 A) 🡒 A) 🡒 (A 🡒 A 🡒 A) 🡒 (A 🡒 A) := implyS;
-  haveI : Λ ⊢ᴺ! (A 🡒 A 🡒 A) 🡒 (A 🡒 A) := mdp this implyK;
-  haveI : Λ ⊢ᴺ! A 🡒 A := mdp this implyK;
+variable {𝔸 𝔸₁ 𝔸₂ : Axioms α} {A B C : Formula α}
+
+def af {A B} : ⊢ʰ![N;𝔸] A → ⊢ʰ![N;𝔸] (B 🡒 A) := λ h => mdp implyK h
+
+def impId : ⊢ʰ![N;𝔸] (A 🡒 A) := by
+  haveI : ⊢ʰ![N;𝔸] ((A 🡒 (A 🡒 A) 🡒 A) 🡒 (A 🡒 A 🡒 A) 🡒 (A 🡒 A)) := implyS;
+  haveI : ⊢ʰ![N;𝔸] ((A 🡒 A 🡒 A) 🡒 (A 🡒 A)) := mdp this implyK;
+  haveI : ⊢ʰ![N;𝔸] (A 🡒 A) := mdp this implyK;
   exact this;
 
-noncomputable def ofSubsetAxm (hsub : Λ₁ ⊆ Λ₂) : Λ₁ ⊢ᴺ! A → Λ₂ ⊢ᴺ! A := λ h => by
+noncomputable def ofSubsetAxm (hsub : 𝔸₁ ⊆ 𝔸₂) : (⊢ʰ![N;𝔸₁] A) → ⊢ʰ![N;𝔸₂] A := λ h => by
   induction h with
   | axm h₁ => exact axm (hsub h₁)
   | implyK => exact implyK
@@ -48,81 +51,83 @@ noncomputable def ofSubsetAxm (hsub : Λ₁ ⊆ Λ₂) : Λ₁ ⊢ᴺ! A → Λ�
   | mdp _ _ ihAB ihA => exact mdp ihAB ihA
   | nec _ ihA => exact nec ihA
 
-end ProofN
+end ProofHilbert
 
 
+abbrev ProvableHilbert (𝔸 : Axioms α) (A : Formula α) : Prop := Nonempty (⊢ʰ![N;𝔸] A)
 
-abbrev ProvableN (Λ : Axioms α) (A : Formula α) : Prop := Nonempty (Λ ⊢ᴺ! A)
-infix:25 " ⊢ᴺ " => ProvableN
+end N
 
-abbrev UnprovableN (Λ : Axioms α) (A : Formula α) : Prop := ¬(Λ ⊢ᴺ A)
-infix:25 " ⊬ᴺ " => UnprovableN
+end Modal
 
-namespace ProvableN
+notation:50 "⊢ʰ[N;" 𝔸 "] " A:51 => Modal.N.ProvableHilbert 𝔸 A
+notation:50 "⊬ʰ[N;" 𝔸 "] " A:51 => ¬(Modal.N.ProvableHilbert 𝔸 A)
 
-variable {Λ : Axioms α} {A B C : Formula α}
+namespace Modal
 
-@[grind =>] lemma axm : A ∈ Λ → Λ ⊢ᴺ A := λ h => ⟨ProofN.axm h⟩
-@[simp, grind .] lemma implyK : Λ ⊢ᴺ A 🡒 B 🡒 A := ⟨ProofN.implyK⟩
-@[simp, grind .] lemma implyS : Λ ⊢ᴺ (A 🡒 B 🡒 C) 🡒 (A 🡒 B) 🡒 (A 🡒 C) := ⟨ProofN.implyS⟩
-@[simp, grind .] lemma efq : Λ ⊢ᴺ ⊥ 🡒 A := ⟨ProofN.efq⟩
-@[simp, grind .] lemma dne : Λ ⊢ᴺ ∼∼A 🡒 A := ⟨ProofN.dne⟩
-@[simp, grind .] lemma andElimL : Λ ⊢ᴺ (A ⋏ B) 🡒 A := ⟨ProofN.andElimL⟩
-@[simp, grind .] lemma andElimR : Λ ⊢ᴺ (A ⋏ B) 🡒 B := ⟨ProofN.andElimR⟩
-@[simp, grind .] lemma andIntro : Λ ⊢ᴺ A 🡒 B 🡒 (A ⋏ B) := ⟨ProofN.andIntro⟩
-@[simp, grind .] lemma impId : Λ ⊢ᴺ A 🡒 A := ⟨ProofN.impId⟩
-@[simp, grind .] lemma orElim : Λ ⊢ᴺ A ⋎ B 🡒 (A 🡒 C) 🡒 (B 🡒 C) 🡒 C := ⟨ProofN.orElim⟩
+namespace N.ProvableHilbert
 
-@[grind =>] lemma mdp : Λ ⊢ᴺ A 🡒 B → Λ ⊢ᴺ A → Λ ⊢ᴺ B := λ ⟨h₁⟩ ⟨h₂⟩ => ⟨ProofN.mdp h₁ h₂⟩
-@[grind =>] lemma mdp₂ (hABC : Λ ⊢ᴺ A 🡒 B 🡒 C) (hA : Λ ⊢ᴺ A) (hB : Λ ⊢ᴺ B) : Λ ⊢ᴺ C := mdp (mdp hABC hA) hB
-@[grind =>] lemma mdp₃ (hABCD : Λ ⊢ᴺ A 🡒 B 🡒 C 🡒 D) (hA : Λ ⊢ᴺ A) (hB : Λ ⊢ᴺ B) (hC : Λ ⊢ᴺ C) : Λ ⊢ᴺ D := mdp (mdp₂ hABCD hA hB) hC
+variable {𝔸 𝔸₁ 𝔸₂ : Axioms α} {A B C : Formula α}
 
-@[grind <=] lemma af : Λ ⊢ᴺ A → Λ ⊢ᴺ B 🡒 A := λ ⟨h⟩ => ⟨ProofN.af h⟩
-@[grind <=] lemma nec : Λ ⊢ᴺ A → Λ ⊢ᴺ □A := λ ⟨h⟩ => ⟨ProofN.nec h⟩
-@[grind .] lemma lem : Λ ⊢ᴺ A ⋎ ∼A := by simp;
+@[grind =>] lemma axm : A ∈ 𝔸 → ⊢ʰ[N;𝔸] A := λ h => ⟨ProofHilbert.axm h⟩
+@[simp, grind .] lemma implyK : ⊢ʰ[N;𝔸] A 🡒 B 🡒 A := ⟨ProofHilbert.implyK⟩
+@[simp, grind .] lemma implyS : ⊢ʰ[N;𝔸] (A 🡒 B 🡒 C) 🡒 (A 🡒 B) 🡒 (A 🡒 C) := ⟨ProofHilbert.implyS⟩
+@[simp, grind .] lemma efq : ⊢ʰ[N;𝔸] ⊥ 🡒 A := ⟨ProofHilbert.efq⟩
+@[simp, grind .] lemma dne : ⊢ʰ[N;𝔸] ∼∼A 🡒 A := ⟨ProofHilbert.dne⟩
+@[simp, grind .] lemma andElimL : ⊢ʰ[N;𝔸] (A ⋏ B) 🡒 A := ⟨ProofHilbert.andElimL⟩
+@[simp, grind .] lemma andElimR : ⊢ʰ[N;𝔸] (A ⋏ B) 🡒 B := ⟨ProofHilbert.andElimR⟩
+@[simp, grind .] lemma andIntro : ⊢ʰ[N;𝔸] A 🡒 B 🡒 (A ⋏ B) := ⟨ProofHilbert.andIntro⟩
+@[simp, grind .] lemma impId : ⊢ʰ[N;𝔸] A 🡒 A := ⟨ProofHilbert.impId⟩
+@[simp, grind .] lemma orElim : ⊢ʰ[N;𝔸] A ⋎ B 🡒 (A 🡒 C) 🡒 (B 🡒 C) 🡒 C := ⟨ProofHilbert.orElim⟩
 
-lemma andElimLRule (hAB : Λ ⊢ᴺ A ⋏ B) : Λ ⊢ᴺ A := mdp andElimL hAB
-lemma andElimRRule (hAB : Λ ⊢ᴺ A ⋏ B) : Λ ⊢ᴺ B := mdp andElimR hAB
-lemma andIntroRule (hA : Λ ⊢ᴺ A) (hB : Λ ⊢ᴺ B) : Λ ⊢ᴺ A ⋏ B := mdp₂ andIntro hA hB
+@[grind =>] lemma mdp : (⊢ʰ[N;𝔸] A 🡒 B) → (⊢ʰ[N;𝔸] A) → ⊢ʰ[N;𝔸] B := λ ⟨h₁⟩ ⟨h₂⟩ => ⟨ProofHilbert.mdp h₁ h₂⟩
+@[grind =>] lemma mdp₂ (hABC : ⊢ʰ[N;𝔸] A 🡒 B 🡒 C) (hA : ⊢ʰ[N;𝔸] A) (hB : ⊢ʰ[N;𝔸] B) : ⊢ʰ[N;𝔸] C := mdp (mdp hABC hA) hB
+@[grind =>] lemma mdp₃ (hABCD : ⊢ʰ[N;𝔸] A 🡒 B 🡒 C 🡒 D) (hA : ⊢ʰ[N;𝔸] A) (hB : ⊢ʰ[N;𝔸] B) (hC : ⊢ʰ[N;𝔸] C) : ⊢ʰ[N;𝔸] D := mdp (mdp₂ hABCD hA hB) hC
 
--- lemma orIntroLRule (hA : Λ ⊢ᴺ A) : Λ ⊢ᴺ A ⋎ B := mdp orIntroL hA
--- lemma orIntroRRule (hB : Λ ⊢ᴺ B) : Λ ⊢ᴺ A ⋎ B := mdp orIntroR hB
-lemma orElimRule (hAB : Λ ⊢ᴺ A ⋎ B) (hAC : Λ ⊢ᴺ A 🡒 C) (hBC : Λ ⊢ᴺ B 🡒 C) : Λ ⊢ᴺ C := mdp₃ orElim hAB hAC hBC
+@[grind <=] lemma af : (⊢ʰ[N;𝔸] A) → ⊢ʰ[N;𝔸] B 🡒 A := λ ⟨h⟩ => ⟨ProofHilbert.af h⟩
+@[grind <=] lemma nec : (⊢ʰ[N;𝔸] A) → ⊢ʰ[N;𝔸] □A := λ ⟨h⟩ => ⟨ProofHilbert.nec h⟩
+@[grind .] lemma lem : ⊢ʰ[N;𝔸] A ⋎ ∼A := by simp;
 
-@[simp, grind .] lemma verum : Λ ⊢ᴺ ⊤ := by simp;
+lemma andElimLRule (hAB : ⊢ʰ[N;𝔸] A ⋏ B) : ⊢ʰ[N;𝔸] A := mdp andElimL hAB
+lemma andElimRRule (hAB : ⊢ʰ[N;𝔸] A ⋏ B) : ⊢ʰ[N;𝔸] B := mdp andElimR hAB
+lemma andIntroRule (hA : ⊢ʰ[N;𝔸] A) (hB : ⊢ʰ[N;𝔸] B) : ⊢ʰ[N;𝔸] A ⋏ B := mdp₂ andIntro hA hB
 
-lemma ofSubsetAxm (h : Λ₁ ⊆ Λ₂) : Λ₁ ⊢ᴺ A → Λ₂ ⊢ᴺ A := λ ⟨h₁⟩ => ⟨ProofN.ofSubsetAxm h h₁⟩
+lemma orElimRule (hAB : ⊢ʰ[N;𝔸] A ⋎ B) (hAC : ⊢ʰ[N;𝔸] A 🡒 C) (hBC : ⊢ʰ[N;𝔸] B 🡒 C) : ⊢ʰ[N;𝔸] C := mdp₃ orElim hAB hAC hBC
 
-@[grind <=] lemma efqRule (hA : Λ ⊢ᴺ ⊥) : Λ ⊢ᴺ A := mdp efq hA
+@[simp, grind .] lemma verum : ⊢ʰ[N;𝔸] (⊤ : Formula α) := by simp;
+
+lemma ofSubsetAxm (h : 𝔸₁ ⊆ 𝔸₂) : (⊢ʰ[N;𝔸₁] A) → ⊢ʰ[N;𝔸₂] A := λ ⟨h₁⟩ => ⟨ProofHilbert.ofSubsetAxm h h₁⟩
+
+@[grind <=] lemma efqRule (hA : ⊢ʰ[N;𝔸] ⊥) : ⊢ʰ[N;𝔸] A := mdp efq hA
 
 @[grind =>]
-lemma consistent_of_unprovable (h : Λ ⊬ᴺ A) : Λ ⊬ᴺ ⊥ := by
+lemma consistent_of_unprovable (h : ⊬ʰ[N;𝔸] A) : ⊬ʰ[N;𝔸] ⊥ := by
   contrapose! h;
   apply efqRule h;
 
 
-@[grind =>] lemma dneRule (hA : Λ ⊢ᴺ ∼∼A) : Λ ⊢ᴺ A := mdp dne hA
+@[grind =>] lemma dneRule (hA : ⊢ʰ[N;𝔸] ∼∼A) : ⊢ʰ[N;𝔸] A := mdp dne hA
 
-lemma ctx_mdp {B} (hCAB : Λ ⊢ᴺ C 🡒 A 🡒 B) (hCA : Λ ⊢ᴺ C 🡒 A) : Λ ⊢ᴺ C 🡒 B := mdp₂ implyS hCAB hCA
-lemma ctx_mdp₂ (hABCD : Λ ⊢ᴺ A 🡒 B 🡒 C 🡒 D) (hABC : Λ ⊢ᴺ A 🡒 B 🡒 C) : Λ ⊢ᴺ A 🡒 B 🡒 D := ctx_mdp (ctx_mdp (af implyS) hABCD) hABC
+lemma ctx_mdp {B} (hCAB : ⊢ʰ[N;𝔸] C 🡒 A 🡒 B) (hCA : ⊢ʰ[N;𝔸] C 🡒 A) : ⊢ʰ[N;𝔸] C 🡒 B := mdp₂ implyS hCAB hCA
+lemma ctx_mdp₂ (hABCD : ⊢ʰ[N;𝔸] A 🡒 B 🡒 C 🡒 D) (hABC : ⊢ʰ[N;𝔸] A 🡒 B 🡒 C) : ⊢ʰ[N;𝔸] A 🡒 B 🡒 D := ctx_mdp (ctx_mdp (af implyS) hABCD) hABC
 
-lemma impTransRule (hAB : Λ ⊢ᴺ A 🡒 B) (hBC : Λ ⊢ᴺ B 🡒 C) : Λ ⊢ᴺ A 🡒 C := by
-  have : Λ ⊢ᴺ (A 🡒 B 🡒 C) 🡒 (A 🡒 B) 🡒 (A 🡒 C) := implyS;
-  have : Λ ⊢ᴺ (A 🡒 B) 🡒 (A 🡒 C) := mdp implyS $ mdp₂ implyS (af $ af $ hBC) hAB;
+lemma impTransRule (hAB : ⊢ʰ[N;𝔸] A 🡒 B) (hBC : ⊢ʰ[N;𝔸] B 🡒 C) : ⊢ʰ[N;𝔸] A 🡒 C := by
+  have : ⊢ʰ[N;𝔸] (A 🡒 B 🡒 C) 🡒 (A 🡒 B) 🡒 (A 🡒 C) := implyS;
+  have : ⊢ʰ[N;𝔸] (A 🡒 B) 🡒 (A 🡒 C) := mdp implyS $ mdp₂ implyS (af $ af $ hBC) hAB;
   exact mdp this hAB;
 
-lemma imp₃Swap (hABC : Λ ⊢ᴺ A 🡒 B 🡒 C) : Λ ⊢ᴺ B 🡒 A 🡒 C := by
+lemma imp₃Swap (hABC : ⊢ʰ[N;𝔸] A 🡒 B 🡒 C) : ⊢ʰ[N;𝔸] B 🡒 A 🡒 C := by
   apply ctx_mdp₂;
   . apply af hABC;
   . apply implyK;
 
-lemma impTrans' : Λ ⊢ᴺ (B 🡒 C) 🡒 (A 🡒 B) 🡒 (A 🡒 C) := impTransRule (imp₃Swap (af impId)) implyS
+lemma impTrans' : ⊢ʰ[N;𝔸] (B 🡒 C) 🡒 (A 🡒 B) 🡒 (A 🡒 C) := impTransRule (imp₃Swap (af impId)) implyS
 
-lemma impTrans : Λ ⊢ᴺ (A 🡒 B) 🡒 (B 🡒 C) 🡒 (A 🡒 C) := by
+lemma impTrans : ⊢ʰ[N;𝔸] (A 🡒 B) 🡒 (B 🡒 C) 🡒 (A 🡒 C) := by
   apply imp₃Swap impTrans';
 
 
-lemma lconjElim {X : List _} (hA : A ∈ X) : Λ ⊢ᴺ ⋀X 🡒 A := by
+lemma lconjElim {X : List _} (hA : A ∈ X) : ⊢ʰ[N;𝔸] ⋀X 🡒 A := by
   match X with
   | [] => contradiction;
   | [B] => grind;
@@ -136,12 +141,12 @@ lemma lconjElim {X : List _} (hA : A ∈ X) : Λ ⊢ᴺ ⋀X 🡒 A := by
     . apply impTransRule;
       . exact andElimR;
       . exact lconjElim (by grind);
-lemma lconjElimRule {X : List _} (hA : A ∈ X) (hAB : Λ ⊢ᴺ ⋀X) : Λ ⊢ᴺ A := mdp (lconjElim hA) hAB
+lemma lconjElimRule {X : List _} (hA : A ∈ X) (hAB : ⊢ʰ[N;𝔸] ⋀X) : ⊢ʰ[N;𝔸] A := mdp (lconjElim hA) hAB
 
-lemma fconjElim {X : Finset _} (hA : A ∈ X) : Λ ⊢ᴺ ⋀X 🡒 A := lconjElim (X := X.toList) (by simpa)
-lemma fconjElimRule {X : Finset _} (hA : A ∈ X) (hAB : Λ ⊢ᴺ ⋀X) : Λ ⊢ᴺ A := mdp (fconjElim hA) hAB
+lemma fconjElim {X : Finset _} (hA : A ∈ X) : ⊢ʰ[N;𝔸] ⋀X 🡒 A := lconjElim (X := X.toList) (by simpa)
+lemma fconjElimRule {X : Finset _} (hA : A ∈ X) (hAB : ⊢ʰ[N;𝔸] ⋀X) : ⊢ʰ[N;𝔸] A := mdp (fconjElim hA) hAB
 
-lemma lconjIntro {X : List _} (hA : ∀ A ∈ X, Λ ⊢ᴺ A) : Λ ⊢ᴺ ⋀X := by
+lemma lconjIntro {X : List _} (hA : ∀ A ∈ X, ⊢ʰ[N;𝔸] A) : ⊢ʰ[N;𝔸] ⋀X := by
   match X with
   | [] => simp;
   | [A] => grind;
@@ -152,19 +157,19 @@ lemma lconjIntro {X : List _} (hA : ∀ A ∈ X, Λ ⊢ᴺ A) : Λ ⊢ᴺ ⋀X :
       grind;
     . apply lconjIntro;
       grind;
-lemma fconjIntro {X : Finset _} (hA : ∀ A ∈ X, Λ ⊢ᴺ A) : Λ ⊢ᴺ ⋀X := lconjIntro (X := X.toList) (by simpa)
+lemma fconjIntro {X : Finset _} (hA : ∀ A ∈ X, ⊢ʰ[N;𝔸] A) : ⊢ʰ[N;𝔸] ⋀X := lconjIntro (X := X.toList) (by simpa)
 
-lemma ctx_af {B} (hCA : Λ ⊢ᴺ C 🡒 A) : Λ ⊢ᴺ C 🡒 B 🡒 A := impTransRule hCA implyK
+lemma ctx_af {B} (hCA : ⊢ʰ[N;𝔸] C 🡒 A) : ⊢ʰ[N;𝔸] C 🡒 B 🡒 A := impTransRule hCA implyK
 
-lemma ctx_impTransRule (hAB : Λ ⊢ᴺ C 🡒 A 🡒 B) (hBC : Λ ⊢ᴺ C 🡒 B 🡒 D) : Λ ⊢ᴺ C 🡒 A 🡒 D := ctx_mdp (impTransRule hAB $ impTrans) hBC
+lemma ctx_impTransRule (hAB : ⊢ʰ[N;𝔸] C 🡒 A 🡒 B) (hBC : ⊢ʰ[N;𝔸] C 🡒 B 🡒 D) : ⊢ʰ[N;𝔸] C 🡒 A 🡒 D := ctx_mdp (impTransRule hAB $ impTrans) hBC
 
-lemma ctxAndIntroRule (hA : Λ ⊢ᴺ C 🡒 A) (hB : Λ ⊢ᴺ C 🡒 B) : Λ ⊢ᴺ C 🡒 (A ⋏ B) := by
+lemma ctxAndIntroRule (hA : ⊢ʰ[N;𝔸] C 🡒 A) (hB : ⊢ʰ[N;𝔸] C 🡒 B) : ⊢ʰ[N;𝔸] C 🡒 (A ⋏ B) := by
   exact ctx_mdp (impTransRule hA $ andIntro) hB;
 
-lemma ctxOrElimRule (hAB : Λ ⊢ᴺ C 🡒 A ⋎ B) (hAC : Λ ⊢ᴺ C 🡒 A 🡒 D) (hBC : Λ ⊢ᴺ C 🡒 B 🡒 D) : Λ ⊢ᴺ C 🡒 D :=
+lemma ctxOrElimRule (hAB : ⊢ʰ[N;𝔸] C 🡒 A ⋎ B) (hAC : ⊢ʰ[N;𝔸] C 🡒 A 🡒 D) (hBC : ⊢ʰ[N;𝔸] C 🡒 B 🡒 D) : ⊢ʰ[N;𝔸] C 🡒 D :=
   ctx_mdp (ctx_mdp (impTransRule hAB orElim) hAC) hBC
 
-lemma ctxLconjIntroRule {X : List _} (hA : ∀ A ∈ X, Λ ⊢ᴺ C 🡒 A) : Λ ⊢ᴺ C 🡒 ⋀X := by
+lemma ctxLconjIntroRule {X : List _} (hA : ∀ A ∈ X, ⊢ʰ[N;𝔸] C 🡒 A) : ⊢ʰ[N;𝔸] C 🡒 ⋀X := by
   match X with
   | [] => apply af; simp;
   | [A] => grind;
@@ -173,30 +178,30 @@ lemma ctxLconjIntroRule {X : List _} (hA : ∀ A ∈ X, Λ ⊢ᴺ C 🡒 A) : Λ
     . apply hA; grind;
     . apply ctxLconjIntroRule; grind;
 
-lemma ctxFconjIntroRule {X : Finset _} (hA : ∀ A ∈ X, Λ ⊢ᴺ C 🡒 A) : Λ ⊢ᴺ C 🡒 ⋀X := ctxLconjIntroRule (X := X.toList) (by simpa)
+lemma ctxFconjIntroRule {X : Finset _} (hA : ∀ A ∈ X, ⊢ʰ[N;𝔸] C 🡒 A) : ⊢ʰ[N;𝔸] C 🡒 ⋀X := ctxLconjIntroRule (X := X.toList) (by simpa)
 
-lemma lconj_subset {X Y : List _} (hsub : X ⊆ Y) : Λ ⊢ᴺ ⋀Y 🡒 ⋀X := by
+lemma lconj_subset {X Y : List _} (hsub : X ⊆ Y) : ⊢ʰ[N;𝔸] ⋀Y 🡒 ⋀X := by
   apply ctxLconjIntroRule;
   intro A hA;
   apply lconjElim;
   apply hsub hA
 
-lemma sconj_subset {X Y : Finset _} (hsub : X ⊆ Y) : Λ ⊢ᴺ ⋀Y 🡒 ⋀X := lconj_subset (X := X.toList) (Y := Y.toList) $ by
+lemma sconj_subset {X Y : Finset _} (hsub : X ⊆ Y) : ⊢ʰ[N;𝔸] ⋀Y 🡒 ⋀X := lconj_subset (X := X.toList) (Y := Y.toList) $ by
   grind [Finset.mem_toList];
 
-lemma uncurry {A B C} (h : Λ ⊢ᴺ A 🡒 B 🡒 C) : Λ ⊢ᴺ (A ⋏ B) 🡒 C := ctx_mdp (impTransRule andElimL h) andElimR
+lemma uncurry {A B C} (h : ⊢ʰ[N;𝔸] A 🡒 B 🡒 C) : ⊢ʰ[N;𝔸] (A ⋏ B) 🡒 C := ctx_mdp (impTransRule andElimL h) andElimR
 
-lemma curry {A B C} (h : Λ ⊢ᴺ (A ⋏ B) 🡒 C) : Λ ⊢ᴺ A 🡒 B 🡒 C := by
-  have h₁ : Λ ⊢ᴺ A 🡒 B 🡒 (A ⋏ B) := andIntro;
-  have h₂ : Λ ⊢ᴺ A 🡒 (A ⋏ B 🡒 C) := af h;
+lemma curry {A B C} (h : ⊢ʰ[N;𝔸] (A ⋏ B) 🡒 C) : ⊢ʰ[N;𝔸] A 🡒 B 🡒 C := by
+  have h₁ : ⊢ʰ[N;𝔸] A 🡒 B 🡒 (A ⋏ B) := andIntro;
+  have h₂ : ⊢ʰ[N;𝔸] A 🡒 (A ⋏ B 🡒 C) := af h;
   exact ctx_impTransRule h₁ h₂;
 
 @[induction_eliminator]
 protected lemma rec
-  {motive  : (A : Formula α) → (Λ ⊢ᴺ A) → Prop}
-  (axm     : ∀ {A}, (h : A ∈ Λ) → motive A (axm h))
-  (mdp     : ∀ {A B}, {hAB : Λ ⊢ᴺ A 🡒 B} → {hA : Λ ⊢ᴺ A} → (motive (A 🡒 B) hAB) → (motive A hA) → (motive B (mdp hAB hA)))
-  (nec     : ∀ {A}, {hA : Λ ⊢ᴺ A} → (motive A hA) → (motive (□A) (nec hA)))
+  {motive  : (A : Formula α) → (⊢ʰ[N;𝔸] A) → Prop}
+  (axm     : ∀ {A}, (h : A ∈ 𝔸) → motive A (axm h))
+  (mdp     : ∀ {A B}, {hAB : ⊢ʰ[N;𝔸] A 🡒 B} → {hA : ⊢ʰ[N;𝔸] A} → (motive (A 🡒 B) hAB) → (motive A hA) → (motive B (mdp hAB hA)))
+  (nec     : ∀ {A}, {hA : ⊢ʰ[N;𝔸] A} → (motive A hA) → (motive (□A) (nec hA)))
   (implyK  : ∀ {A B}, (motive (A 🡒 B 🡒 A) implyK))
   (implyS  : ∀ {A B C}, (motive ((A 🡒 B 🡒 C) 🡒 (A 🡒 B) 🡒 (A 🡒 C)) implyS))
   (efq     : ∀ {A}, (motive (⊥ 🡒 A) efq))
@@ -205,34 +210,38 @@ protected lemma rec
   (andElimR : ∀ {A B}, (motive ((A ⋏ B) 🡒 B) andElimR))
   (andIntro : ∀ {A B}, (motive (A 🡒 B 🡒 (A ⋏ B)) andIntro))
   (orElim   : ∀ {A B C}, (motive (A ⋎ B 🡒 (A 🡒 C) 🡒 (B 🡒 C) 🡒 C) orElim))
-  : ∀ {A}, (d : Λ ⊢ᴺ A) → motive A d := by rintro A ⟨d⟩; induction d <;> grind;
+  : ∀ {A}, (d : ⊢ʰ[N;𝔸] A) → motive A d := by rintro A ⟨d⟩; induction d <;> grind;
 
-end ProvableN
-
-
-def FinitelyDerivableN (Λ : Axioms α) (X : Finset (Formula α)) (A : Formula α) := Λ ⊢ᴺ ⋀X 🡒 A
-notation:25 X " ⊢ᴺ[" Λ "] " A => FinitelyDerivableN Λ X A
+end N.ProvableHilbert
 
 
-namespace FinitelyDerivableN
+def N.FinitelyDerivableHilbert (𝔸 : Axioms α) (X : Finset (Formula α)) (A : Formula α) := ⊢ʰ[N;𝔸] ⋀X 🡒 A
 
-variable {Λ : Axioms α} {X : Finset (Formula α)} {A B C : Formula α}
+end Modal
 
-open ProvableN
+notation:50 X:51 " ⊢ʰ[N;" 𝔸 "] " A:51 => Modal.N.FinitelyDerivableHilbert 𝔸 X A
 
-lemma iff_empty_derivable : (Λ ⊢ᴺ A) ↔ (∅ ⊢ᴺ[Λ] A)  := by
-  unfold FinitelyDerivableN;
+namespace Modal
+
+namespace N.FinitelyDerivableHilbert
+
+variable {𝔸 : Axioms α} {X : Finset (Formula α)} {A B C : Formula α}
+
+open N.ProvableHilbert
+
+lemma iff_empty_derivable : (⊢ʰ[N;𝔸] A) ↔ ((∅ : Finset (Formula α)) ⊢ʰ[N;𝔸] A) := by
+  unfold FinitelyDerivableHilbert;
   constructor;
   . intro h;
     exact af $ h;
   . intro h;
     exact mdp h (by simp);
 
-lemma to_ctx [DecidableEq α] : (X ⊢ᴺ[Λ] A 🡒 B) → ((insert A X) ⊢ᴺ[Λ] B) := by
-  unfold FinitelyDerivableN;
+lemma to_ctx [DecidableEq α] : (X ⊢ʰ[N;𝔸] A 🡒 B) → ((insert A X) ⊢ʰ[N;𝔸] B) := by
+  unfold FinitelyDerivableHilbert;
   intro h;
   apply impTransRule;
-  . show Λ ⊢ᴺ ⋀insert A X 🡒 (⋀X ⋏ A);
+  . show ⊢ʰ[N;𝔸] ⋀insert A X 🡒 (⋀X ⋏ A);
     apply ctxAndIntroRule;
     . apply sconj_subset;
       grind;
@@ -240,12 +249,12 @@ lemma to_ctx [DecidableEq α] : (X ⊢ᴺ[Λ] A 🡒 B) → ((insert A X) ⊢ᴺ
       grind;
   . exact uncurry h;
 
-lemma from_ctx [DecidableEq α] : ((insert A X) ⊢ᴺ[Λ] B) → (X ⊢ᴺ[Λ] A 🡒 B) := by
-  unfold FinitelyDerivableN;
+lemma from_ctx [DecidableEq α] : ((insert A X) ⊢ʰ[N;𝔸] B) → (X ⊢ʰ[N;𝔸] A 🡒 B) := by
+  unfold FinitelyDerivableHilbert;
   intro h;
   apply curry;
   apply impTransRule;
-  . show Λ ⊢ᴺ (⋀X ⋏ A) 🡒 ⋀(insert A X);
+  . show ⊢ʰ[N;𝔸] (⋀X ⋏ A) 🡒 ⋀(insert A X);
     apply ctxFconjIntroRule;
     intro C hC;
     simp only [Finset.mem_insert] at hC;
@@ -256,75 +265,75 @@ lemma from_ctx [DecidableEq α] : ((insert A X) ⊢ᴺ[Λ] B) → (X ⊢ᴺ[Λ] 
       . exact fconjElim hC;
   . exact h;
 
-lemma of_mem_ctx (hA : A ∈ X) : X ⊢ᴺ[Λ] A := by
-  unfold FinitelyDerivableN;
-  apply ProvableN.fconjElim hA;
+lemma of_mem_ctx (hA : A ∈ X) : X ⊢ʰ[N;𝔸] A := by
+  unfold FinitelyDerivableHilbert;
+  apply ProvableHilbert.fconjElim hA;
 
-lemma mdp (hAB : X ⊢ᴺ[Λ] A 🡒 B) (hA : X ⊢ᴺ[Λ] A) : X ⊢ᴺ[Λ] B := by
-  unfold FinitelyDerivableN at hAB hA ⊢;
-  exact ProvableN.ctx_mdp hAB hA;
+lemma mdp (hAB : X ⊢ʰ[N;𝔸] A 🡒 B) (hA : X ⊢ʰ[N;𝔸] A) : X ⊢ʰ[N;𝔸] B := by
+  unfold FinitelyDerivableHilbert at hAB hA ⊢;
+  exact ProvableHilbert.ctx_mdp hAB hA;
 
-lemma weakening (hsub : X ⊆ Y) (hX : X ⊢ᴺ[Λ] A) : Y ⊢ᴺ[Λ] A := by
-  unfold FinitelyDerivableN at hX ⊢;
-  apply ProvableN.impTransRule ?_ hX;
-  apply ProvableN.sconj_subset hsub;
+lemma weakening (hsub : X ⊆ Y) (hX : X ⊢ʰ[N;𝔸] A) : Y ⊢ʰ[N;𝔸] A := by
+  unfold FinitelyDerivableHilbert at hX ⊢;
+  apply ProvableHilbert.impTransRule ?_ hX;
+  apply ProvableHilbert.sconj_subset hsub;
 
-lemma of_provable (hA : Λ ⊢ᴺ A) : X ⊢ᴺ[Λ] A := by
+lemma of_provable (hA : ⊢ʰ[N;𝔸] A) : X ⊢ʰ[N;𝔸] A := by
   exact weakening (show ∅ ⊆ X by simp) $ iff_empty_derivable.mp hA;
 
-lemma orElim (hAB : X ⊢ᴺ[Λ] A ⋎ B) (hAC : X ⊢ᴺ[Λ] A 🡒 C) (hBC : X ⊢ᴺ[Λ] B 🡒 C) : X ⊢ᴺ[Λ] C := ctxOrElimRule hAB hAC hBC
+lemma orElim (hAB : X ⊢ʰ[N;𝔸] A ⋎ B) (hAC : X ⊢ʰ[N;𝔸] A 🡒 C) (hBC : X ⊢ʰ[N;𝔸] B 🡒 C) : X ⊢ʰ[N;𝔸] C := ctxOrElimRule hAB hAC hBC
 
-lemma lem_elim (hA : X ⊢ᴺ[Λ] A 🡒 B) (hNA : X ⊢ᴺ[Λ] ∼A 🡒 B) : X ⊢ᴺ[Λ] B := by
+lemma lem_elim (hA : X ⊢ʰ[N;𝔸] A 🡒 B) (hNA : X ⊢ʰ[N;𝔸] ∼A 🡒 B) : X ⊢ʰ[N;𝔸] B := by
   apply orElim (of_provable lem) hA hNA;
 
-end FinitelyDerivableN
+end N.FinitelyDerivableHilbert
 
 
-namespace ProvableN
+namespace N.ProvableHilbert
 
-open FinitelyDerivableN
+open N.FinitelyDerivableHilbert
 
-variable [DecidableEq α] {Λ : Axioms α} {A B C D : Formula α}
+variable [DecidableEq α] {𝔸 : Axioms α} {A B C D : Formula α}
 
-lemma www (h : Λ ⊢ᴺ B 🡒 A) : Λ ⊢ᴺ (A 🡒 C) 🡒 B 🡒 C := by
+lemma www (h : ⊢ʰ[N;𝔸] B 🡒 A) : ⊢ʰ[N;𝔸] (A 🡒 C) 🡒 B 🡒 C := by
   apply iff_empty_derivable.mpr;
   apply from_ctx;
   apply from_ctx;
-  apply FinitelyDerivableN.mdp;
-  . show {B, A 🡒 C} ⊢ᴺ[Λ] A 🡒 C;
+  apply FinitelyDerivableHilbert.mdp;
+  . show ({B, A 🡒 C} : Finset (Formula α)) ⊢ʰ[N;𝔸] A 🡒 C;
     apply of_mem_ctx (by grind);
-  . apply FinitelyDerivableN.mdp;
-    . show {B, A 🡒 C} ⊢ᴺ[Λ] B 🡒 A;
+  . apply FinitelyDerivableHilbert.mdp;
+    . show ({B, A 🡒 C} : Finset (Formula α)) ⊢ʰ[N;𝔸] B 🡒 A;
       apply of_provable h;
     . apply of_mem_ctx (by grind);
 
 @[simp, grind .]
-lemma dni : Λ ⊢ᴺ A 🡒 ∼∼A := by
+lemma dni : ⊢ʰ[N;𝔸] A 🡒 ∼∼A := by
   apply iff_empty_derivable.mpr;
   apply from_ctx;
   apply from_ctx;
-  apply FinitelyDerivableN.mdp;
-  . show {∼A, A} ⊢ᴺ[Λ] ∼A;
+  apply FinitelyDerivableHilbert.mdp;
+  . show ({∼A, A} : Finset (Formula α)) ⊢ʰ[N;𝔸] ∼A;
     apply of_mem_ctx (by grind);
-  . show {∼A, A} ⊢ᴺ[Λ] A;
+  . show ({∼A, A} : Finset (Formula α)) ⊢ʰ[N;𝔸] A;
     apply of_mem_ctx (by grind);
 
-lemma ctx_nc (hCA : Λ ⊢ᴺ C 🡒 A) : Λ ⊢ᴺ C 🡒 (∼A 🡒 D) := by
+lemma ctx_nc (hCA : ⊢ʰ[N;𝔸] C 🡒 A) : ⊢ʰ[N;𝔸] C 🡒 (∼A 🡒 D) := by
   apply iff_empty_derivable.mpr;
   apply from_ctx;
   apply from_ctx;
-  replace hCA : {∼A, C} ⊢ᴺ[Λ] A  := weakening (by grind) $ to_ctx $ iff_empty_derivable.mp hCA;
-  have : {∼A, C} ⊢ᴺ[Λ] ∼A := of_mem_ctx (by grind);
-  have : {∼A, C} ⊢ᴺ[Λ] ⊥ := .mdp this hCA;
-  have : {∼A, C} ⊢ᴺ[Λ] D := .mdp (of_provable (by simp)) this;
+  replace hCA : ({∼A, C} : Finset (Formula α)) ⊢ʰ[N;𝔸] A  := weakening (by grind) $ to_ctx $ iff_empty_derivable.mp hCA;
+  have : ({∼A, C} : Finset (Formula α)) ⊢ʰ[N;𝔸] ∼A := of_mem_ctx (by grind);
+  have : ({∼A, C} : Finset (Formula α)) ⊢ʰ[N;𝔸] ⊥ := .mdp this hCA;
+  have : ({∼A, C} : Finset (Formula α)) ⊢ʰ[N;𝔸] D := .mdp (of_provable (by simp)) this;
   exact this;
 
-lemma ctx_nc2 (hCA : Λ ⊢ᴺ C 🡒 ∼A) : Λ ⊢ᴺ C 🡒 (A 🡒 D) := by
+lemma ctx_nc2 (hCA : ⊢ʰ[N;𝔸] C 🡒 ∼A) : ⊢ʰ[N;𝔸] C 🡒 (A 🡒 D) := by
   apply impTransRule $ ctx_nc (A := ∼A) (D := D) hCA;
   apply www dni;
 
 
-end ProvableN
+end N.ProvableHilbert
 
 
 end Modal
